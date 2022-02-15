@@ -68,7 +68,13 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
 
 //    private var reusableId: String!
     
-    public var dataList: Array<Array<Any>>?
+    /// SGListView data list, which will set delegate and dataSource to SGListView itself while didiSet, consequentlly it could be initing and defining safely when used.
+    public var dataList: Array<Array<Any>>?{
+        didSet{
+            self.delegate = self
+            self.dataSource = self
+        }
+    }
     
     ///  Generate reusable id when did set. eg. "SG_LIST_VIEW_MyCell_372"
     private var cellClass: AnyClass! {
@@ -77,7 +83,7 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
         }
     }
     
-    // MARK: Override init.
+    // MARK: Override init and method.
     override init(frame: CGRect, collectionViewLayout layout: UICollectionViewLayout) {
         super.init(frame: frame, collectionViewLayout: layoutItem)
     }
@@ -86,11 +92,32 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func reloadItems(at indexPaths: [IndexPath]) {
+        super.reloadItems(at: indexPaths)
+    }
+    
+    /// Reload accurate position of cell rather than reload all data.
+    override func reloadData() {
+        super.reloadData()
+    }
+    
+    override func deleteItems(at indexPaths: [IndexPath]) {
+        super.deleteItems(at: indexPaths)
+    }
+    
+    override func moveItem(at indexPath: IndexPath, to newIndexPath: IndexPath) {
+        super.moveItem(at: indexPath, to: newIndexPath)
+    }
+    
+    override func insertItems(at indexPaths: [IndexPath]) {
+        super.insertItems(at: indexPaths)
+    }
+    
     // FIXME: - FIX HIGH.
     // MARK: - Init configuration.
     public func initConfig(cellClass: AnyClass, reusableId: String){
-        self.delegate = self
-        self.dataSource = self
+//        self.delegate = self
+//        self.dataSource = self
  //       self.reusableId = reusableId
         self.register(cellClass, forCellWithReuseIdentifier: reusableId)
     }
