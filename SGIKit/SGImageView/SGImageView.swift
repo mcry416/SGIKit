@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import AudioToolbox
 
 class SGImageView: UIView {
     
@@ -16,6 +17,9 @@ class SGImageView: UIView {
     
     /// SGImageView whether could be click or action animation.
     public var isEnableTouch: Bool = true
+    
+    /// SGImageView whether could be action vibrate when touched.
+    public var isTouchShake: Bool = true
     
     private var _setOnImageClickListener: SetOnImageViewClickListener?
     /// Set on SGImageView click listener.
@@ -72,6 +76,12 @@ class SGImageView: UIView {
                                          width: self.initFrame.width - 30,
                                          height: self.initFrame.height - 30)
                 self.imageView.frame = zoomOutRect
+            }
+            // Shake lightly when user touch SGImageView.
+            if isTouchShake {
+                let gen = UIImpactFeedbackGenerator(style: UIImpactFeedbackGenerator.FeedbackStyle.light)
+                gen.prepare()
+                gen.impactOccurred()
             }
         }
     }
