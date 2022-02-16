@@ -1,13 +1,17 @@
 //
 //  SGImageViewTypealias.swift
-//  EHICompent
+//  SGIKit
 //
-//  Created by MengQingyu iMac on 2022/2/14.
+//  Created by MCRY416 iMac on 2021/12/19.
 //
 
 import Foundation
 
-/**
- Set on SGImageView click listener.
- */
-typealias SetOnImageViewClickListener = () -> Void
+extension SGImageView{
+    
+    /**
+    Set on SGImageView click listener.
+    */
+    typealias SetOnImageViewClickListener = () -> Void
+
+}
