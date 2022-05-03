@@ -60,3 +60,28 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 ### DSL(Not all) Features.
 
 - #### Bind Widget Attributes.
+
+
+Example code:
+
+- DSL apply in `viewDidLoad()`
+```swift
+        VLayout {
+            [self.HLayout {
+                [self.Button(text: "Beijing") {
+                    self.toast("Beijing", location: .center)
+                    Log.debug("Beijing")
+                },
+                 self.Button(text: "Nanjing", listener: {
+                    self.toast("Nanjing", location: .center)
+                    self.Bind(1001).image = UIImage(named: "ef")
+                })]
+            },
+             self.HLayout {
+                 [self.ImageView(name: "taylor", size: CGSize(width: 66, height: 66), bind: 1001),
+                  self.ImageView(name: "ef"),
+                  self.ImageView(name: "ef")
+                 ]
+             }]
+        }
+```
