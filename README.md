@@ -3,9 +3,11 @@ Standard General Interface Kit. It contains useful extension and foundation subc
 Standard General Interface Fast Kit. It's DSL development way which made of closure and extension by Swift language features.
 
 
-|||
-|||
-|||
+|Base Name| Function / Features|
+|-|-|
+|SGSqaureView| A development forms|
+|SGIKit(Basic widget & foudation)| Self define view subclass and extension|
+|SGIFKit| DSL development forms|
 
 ## Standard General Interface Kit.
 
