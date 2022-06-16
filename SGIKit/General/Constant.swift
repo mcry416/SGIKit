@@ -8,7 +8,9 @@
 import Foundation
 import UIKit
 
-// MARK: - Variables & Constan.
+// MARK: - Variables & Constant.
+let kWHOLE_FRAME: CGRect      = UIScreen.main.bounds
+
 let kSCREEN_WIDTH: CGFloat    = UIScreen.main.bounds.width
 
 let kSCREEN_HEIGHT: CGFloat   = UIScreen.main.bounds.height
@@ -19,11 +21,13 @@ let kHALF_HEIGHT: CGFloat     = UIScreen.main.bounds.height / 2
 
 let kCENTER_POINT: CGPoint    = CGPoint(x: kHALF_WIDTH, y: kHALF_HEIGHT)
 
-let window                    = UIApplication.shared.keyWindow
+let kBAR_HEIGHT: CGFloat      = 44
 
-let kTOP_PADDING: CGFloat     = window?.safeAreaInsets.top ?? 0
+let kWINDOW                   = UIApplication.shared.keyWindow
 
-let kBOTTOM_PADDING: CGFloat  = window?.safeAreaInsets.bottom ?? 0
+let kTOP_PADDING: CGFloat     = kWINDOW?.safeAreaInsets.top ?? 0
+
+let kBOTTOM_PADDING: CGFloat  = kWINDOW?.safeAreaInsets.bottom ?? 0
 
 let kEDGE_PADDING_12: CGFloat = 12
 
@@ -37,9 +41,13 @@ let k14: CGFloat              = kEDGE_PADDING_14
 
 let k16: CGFloat              = kEDGE_PADDING_16
 
+let kVERSION                  = UIDevice.current.systemVersion
 
+let kORIENTATION              = UIDevice.current.orientation
 
+let kIS_FULL_SCREEN: Bool     = (kBOTTOM_PADDING == 0) ? false : true
 
+let kIS_IPAD: Bool            = (kSCREEN_HEIGHT > 2600) ? true : false
 
 
 // MARK: - Functions.
