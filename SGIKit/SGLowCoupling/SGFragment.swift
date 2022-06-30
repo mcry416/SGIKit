@@ -51,8 +51,7 @@ class SGFragment: NSObject{
     
     public var bundles: Array<NSObject> = Array<NSObject>()
     
-    public var totalHeight: CGFloat = 0
-    
+    /// SGFragment position that arranged in activity.
     public var fragmentPosition: Int = 0
     
     /// Item right and left spacing, default 0.
@@ -61,21 +60,20 @@ class SGFragment: NSObject{
     /// Item right and left spacing in landscape mode, defalut 0.
     public var landscapeSideSpacing: CGFloat = 0
     
-    /// Item animated interval , default 0.3.
-    public var animatedInterval: TimeInterval = 0.3
+    /// Item animated interval , default 0.382.
+    public var animatedInterval: TimeInterval = 0.382
     
     /// When SGFragment was instanced to use this closure.
     private var loadedCompletionClosure: ((_ items: Array<SGItem>) -> Void)?
     
     /// When items was binded to use this closure.
-    private var bindCompletionClosure: ((_ item: SGItem, _ bundle: Array<NSObject>, _ index: Int) -> Void)?
+    private var bindCompletionClosure: ((_ item: SGItem, _ bundle: Any, _ index: Int) -> Void)?
     
     /**
      Normally initlized to use delegate, rather than use `override init()`.
      Cause this problem is that SGFragment is inherited from NSObject rather than UIView, NSObject did not have the method of `didMoveToWidnow()`.
      */
     public final func nInit(){
-        _initFragment()
         
     }
     
@@ -88,11 +86,16 @@ class SGFragment: NSObject{
         
     }
     
+}
+
+// MARK: - Outside method.
+extension SGFragment{
+    
     /**
      When items was iterated and executed this method.
      - Parameter handler: Process handler, to do business.
      */
-    public final func bindCompletionHandler(_ handler: ((_ item: SGItem, _ bundles: Array<NSObject>, _ index: Int) -> Void)?){
+    public final func bindCompletionHandler(_ handler: ((_ item: SGItem, _ bundle: Any, _ index: Int) -> Void)?){
         bindCompletionClosure = { (item, bundles, index) in
             handler!(item, bundles, index)
         }
@@ -109,7 +112,7 @@ class SGFragment: NSObject{
     }
     
     /**
-     When device was rotated and override this method to process the condition of rotated.
+     When device was rotated and overrided this method to process the condition of rotated.
      - Parameter rawValue: Spin code, 0 meas normally, 1 means device back, 2 means volume button at the bottom, 3 means power button at the bottom.
      */
     open func fragmentWillRotate(rawValue: Int){
@@ -133,34 +136,13 @@ class SGFragment: NSObject{
                     // When the 'bundleHashValue' is 0, which means it has not been initlized,
                     // When the 'bundleHashValue' is 1, which means it has been initlized and just one times,
                     // When the 'bundleHashValue' is 2, which means it may be updated the bundle one or more times.
-                    // So we just need to update the item that its bundle was changed one or more times, which is a Effective way to update.
+                    // So we just need to update the item that its bundle was changed one or more times, which is a effective way to update.
                     if item.bundleHashValue.peek() != hashBundle.hashValue {
                         item.bindBundle(item.bundle)
                     }
                 }
                 // Execute bind competion closure.
-                self.bindCompletionClosure!(self.items[iterateIndex], self.bundles, iterateIndex)
-            }
-        }
-    }
-    
-}
-
-extension SGFragment{
-    
-    fileprivate final func getOperationBundles() -> Array<NSObject>{
-        return Array<NSObject>()
-    }
-
-    fileprivate final func _initFragment(){
-        
-        if let delegate = self.delegate {
-
-            for index in 0..<delegate.numberOfItemForFragment(self) {
-                let item = delegate.itemAtIndex(index, fragment: self)
-                totalHeight = totalHeight + item.frame.height
-                
-         //       items.append(item)
+                self.bindCompletionClosure!(self.items[iterateIndex], self.items[iterateIndex].bundle as Any, iterateIndex)
             }
         }
     }

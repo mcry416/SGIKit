@@ -26,14 +26,6 @@ import CoreMedia
     @objc optional func fragmentAtIndex(_ activity: SGActivity, index: Int) -> SGFragment
     
     /**
-     Return concrete position SGItem instance by index in the activity.
-     - Parameter activity: SGActivity instance, user could ignore this. It means only concrete viewModel in the ViewContoller generallery speaking.
-     - Parameter index: SGItem position that located in `self.items`, could ignored it when using.
-     - Returns: SGItem instance, which ought to be view layer.
-     */
-    @objc optional func itemAtIndex(_ activity: SGFragment, index: Int) -> SGItem
-    
-    /**
      Return an optional top fragment for acitivity, which is similar to 'Top Notice View', but the fragment  shows the condition that the user has to drop down.
      - Parameter activity: SGActivity instance, user could ignore this. It means only concrete viewModel in the ViewContoller generallery speaking.
      - Returns: SGFragment instance that used for show top view.
