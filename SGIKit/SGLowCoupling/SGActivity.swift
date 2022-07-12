@@ -185,7 +185,7 @@ extension SGActivity{
 extension SGActivity{
     
     // MARK: - Rotate.
-    public func activityRotate(rawValue: Int){
+    open func activityRotate(rawValue: Int){
         switch rawValue {
         case 1:
             /**
@@ -215,7 +215,9 @@ extension SGActivity{
 
                     // When activity execute this case, which means it's not first time to load,
                     // item need to re-bind bundle in this situation consequently.
-                    item.bindBundle(item.bundle)
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
 
                     yValue = item.frame.height + yValue
                 }
@@ -230,6 +232,26 @@ extension SGActivity{
             }
             
             isInPortraitModel = true
+            
+            if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
+                var underYValue: CGFloat = 0
+                topFragment.items.forEach { item in
+                    underYValue = underYValue - item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: underYValue,
+                                        width: item.frame.width,
+                                        height: item.frame.height)
+                    
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 1)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+                
+            }
             
         case 3:
             /**
@@ -264,6 +286,26 @@ extension SGActivity{
             }
             
             isInPortraitModel = false
+            
+            if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
+                var underYValue: CGFloat = 0
+                topFragment.items.forEach { item in
+                    underYValue = underYValue - item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: underYValue,
+                                        width: self.contentSize.width,
+                                        height: item.frame.height)
+                    
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+                
+            }
             
         case 4:
             /**
@@ -309,8 +351,7 @@ extension SGActivity{
     /**
      Return a fragment.
      */
-    public func getFragment(at index: Int) -> SGFragment{
-//        assert(fragments[index] != nil, "Must be specifyed an index that not over range.")
+    open func getFragment(at index: Int) -> SGFragment{
         return fragments[index]
     }
     
@@ -390,8 +431,6 @@ extension SGActivity{
      Delete a fragment by index.
      */
     open func deleteFragment(at index: Int){
- //       assert(fragments[index] == nil, "Must be verificated the index whether in safe range.")
-        
         fragments.forEach { fragment in
             if fragment.fragmentPosition == index{
                 fragment.items.forEach { item in
@@ -457,7 +496,6 @@ extension SGActivity{
      */
     @discardableResult
     open func updateFragment(at index: Int, completion: ((_ fragment: SGFragment) -> SGFragment)?) -> SGFragment{
-//        assert(fragments[index] != nil, "Must be specifyed an index that not over range.")
         fragments[index] = completion!(fragments[index])
         return fragments[index]
     }
@@ -468,7 +506,7 @@ extension SGActivity{
      Scroll to specified SGItem.
      - Parameter index: The index of item in totally.
      */
-    open func jumpTo(atItem index: Int){
+    open func jumpTo(atItem index: Int, _ animated: Bool = true){
         assert(index <= items.count, "SGActivity can not jump to over the range of index position.")
         
         let rect: CGRect = CGRect(x: self.frame.origin.x,
@@ -476,7 +514,7 @@ extension SGActivity{
                                   width: self.frame.size.width,
                                   height: self.frame.size.height)
         
-        self.scrollRectToVisible(rect, animated: true)
+        self.scrollRectToVisible(rect, animated: animated)
         
     }
     
@@ -484,18 +522,37 @@ extension SGActivity{
      Scroll to specified SGFragment.
      - Parameter index: The index of fragment in totally, it containes convenience fragments but except for Top or Bottom fragment.
      */
-    open func jumpTo(atFragment index: Int){
+    open func jumpTo(atFragment index: Int, _ animated: Bool = true){
+        assert(index <= fragments.count, "SGActivity can not jump to over the range of index position.")
         
+        let rect = CGRect(x: self.frame.origin.x,
+                          y: fragments[index].items[0].frame.origin.y,
+                          width: self.frame.size.width,
+                          height: self.frame.size.height)
+        
+        self.scrollRectToVisible(rect, animated: animated)
     }
     
     /**
      Call this method to jump to the top edge.
      */
-    open func jumpToTop(){
+    open func jumpToTop(_ animated: Bool = true){
         self.scrollRectToVisible(CGRect(x: self.frame.origin.x,
-                                        y: self.frame.origin.y,
+                                        y: 0,
                                         width: self.frame.size.width,
-                                        height: self.frame.size.height), animated: true)
+                                        height: self.frame.size.height), animated: animated)
+    }
+    
+    /**
+     Call this method to jump to the bottom edge.
+     */
+    open func jumpToBottom(_ animated: Bool = true){
+        // Scroll distance can not be the max y of content size, decrease 1 for itself is the best way to solve it consequently.
+        let distance: CGFloat = self.contentSize.height - 1
+        self.scrollRectToVisible(CGRect(x: self.frame.origin.x,
+                                        y: distance,
+                                        width: self.frame.size.width,
+                                        height: self.frame.size.height), animated: animated)
     }
     
     /**
