@@ -58,7 +58,7 @@ extension SGMenuView{
      Listener the action when use click the menu item.
      - Parameter handler: Provide a index for user to operation.
      */
-    public func setOnMenuClickListener(handler: @escaping ((_ index: Int) -> Void)){
+    public final func setOnMenuClickListener(handler: @escaping ((_ index: Int) -> Void)){
         menuClickAction = { (index) in
             handler(index)
         }
@@ -67,10 +67,17 @@ extension SGMenuView{
     /**
      Listener the action when use close the menu view.
      */
-    public func setOnMenuCloseListener(handler: @escaping (() -> Void)){
+    public final func setOnMenuCloseListener(handler: @escaping (() -> Void)){
         menuCloseAction = {
             handler()
         }
+    }
+    
+    /**
+     Close the menu view.
+     */
+    public final func close(){
+        hideSGMenuView()
     }
     
 }
@@ -85,6 +92,10 @@ extension SGMenuView{
         window?.addSubview(backgroundView)
         window?.addSubview(contentView)
         contentView.addSubview(collectionView)
+        
+        UIView.animate(withDuration: 0.3) {
+            self.backgroundView.backgroundColor = .black.withAlphaComponent(0.25)
+        }
         
         self.datas = datas
         
@@ -149,7 +160,7 @@ extension SGMenuView{
     fileprivate func createBackgroundView() -> UIView{
         let view = UIView(frame: .zero)
         view.frame = UIApplication.shared.keyWindow?.bounds ?? .zero
-        view.backgroundColor = .black.withAlphaComponent(0.4)
+        view.backgroundColor = .black.withAlphaComponent(0)
         let tap = UITapGestureRecognizer(target: self, action: #selector(hideSGMenuView))
         view.addGestureRecognizer(tap)
         return view
@@ -205,6 +216,7 @@ extension SGMenuView{
     fileprivate func kScreenHeight() -> CGFloat {
         return UIScreen.main.bounds.height
     }
+    /// Device bottom padding for screen.
     fileprivate func kBottomPadding() -> CGFloat{
         return (UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0) + 49
     }
