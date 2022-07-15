@@ -66,14 +66,21 @@ Example code:
 
 - SGListView apply in normally operation.
 ```swift
-let list = SGListView(direction: .vertical, cellClass: MyCell)
-list.setDataBind = { (cell, index) in
+let list = SGListView(direction: .vertical, cellClass: MyCell.self)
+listView.frame = self.view.frame
+listView.itemSize = CGSize(width: kSCREEN_WIDTH - 50, height: 100)
+        
+listView.setOnCellDataBindListener { cellClass, model, indexPath in
+    let tempModel: Test1Model = model as! Test1Model
+    let tempCell: MyCell = cellClass as! MyCell
+            
+    tempCell.label.text = tempModel.text1
+    tempCell.label2.text = tempModel.text2
+}
+listView.setOnCellClickListnenr { cell, indexPath in
 
 }
-list.setOnCellClickListener = { (index) in
 
-}
-self.view.addSubview(list)
 ```
 
 - SGFragment subclass in SGSquareView forms
