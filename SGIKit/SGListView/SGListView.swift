@@ -17,6 +17,7 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     /// SGListView inner reusable id. Related to cellClass.
     private var REUSABLE_ID = "SLV"
     
+    /// Flow layout item.
     private var layoutItem: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
     
     private var _itemSize: CGSize?
@@ -31,11 +32,26 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
         }
     }
     
+    /// When the cell is going to display event.
+    private var setOnCellWillDisplayClosure: SetOnCellWillDisplayClosure?
+    
     /// Click event of cell for UICollectionView.
     private var setOnCellClickClosure: SetOnCellClickClosure?
     
+    /// Declick event of cell for UICollectionView.
+    private var setOnCellDeclickClosure: SetOnCellDeclickClosure?
+    
+    /// Will click event of cell for UICollectionView.
+    private var setOnCellWillClickClosure: SetOnCellWillClickClosure?
+    
+    /// The click event has been finished event of cell for UICollectionView.
+    private var setOnCellFinishClickClosure: SetOnCellFinishClickClosure?
+    
     /// To bind cell and outside data source(dataList) with index.
     private var setOnCellDataBindClosure: SetOnCellDataBindClosure?
+    
+    /// Wehther the cell should be display.
+    private var setOnCellWhetherClickClosure: SetOnCellWhetherClickClosure?
     
     /// SGListView data list, which will set delegate and dataSource to SGListView itself while didiSet, consequentlly it could be initing and defining safely when used.
     public var dataList: Array<Array<Any>>?{
@@ -49,7 +65,6 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     private var cellClass: AnyClass! {
         didSet{
             REUSABLE_ID = "\(REUSABLE_ID)_\(NSStringFromClass(cellClass).uppercased())_\(Int(arc4random_uniform(1000)))"
-            Log.debug("ID: \(REUSABLE_ID)")
         }
     }
     
@@ -107,7 +122,7 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     }
     
     // MARK: - SGListView init method.
-    convenience init(direction: ListViewDirection, cellClass: AnyClass) {
+    convenience init(direction: ListViewDirection = .vertical, cellClass: AnyClass) {
         self.init()
         
         REUSABLE_ID = "\(REUSABLE_ID)_\(NSStringFromClass(cellClass).uppercased())_\(Int(arc4random_uniform(1000)))"
@@ -123,11 +138,61 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
 extension SGListView{
     
     /**
+     Wehther the cell could be action the click event.
+     - Parameter listener: A handler for click event. `indexPath` is contained section and row data structure.
+     */
+    public func setOnCellWhetherClickListener(_ listener: @escaping ((_ indexPath: IndexPath) -> Bool)){
+        setOnCellWhetherClickClosure = { (indexPath) in
+            return listener(indexPath)
+        }
+    }
+    
+    /**
+     Will display event of cell for SGListView.
+     - Parameter listener: A handler for click event. `cell` is loaded UICollectionViewCell; `indexPath` is contained section and row data structure.
+     */
+    public func setOnCellWillDisplayListener(_ listener: @escaping (( _ indexPath: IndexPath) -> Void)){
+        setOnCellWillDisplayClosure = { (indexPath) in
+            listener(indexPath)
+        }
+    }
+    
+    /**
      Click event of cell for SGListView.
      - Parameter listener: A handler for click event. `cell` is loaded UICollectionViewCell; `indexPath` is contained section and row data structure.
      */
     public func setOnCellClickListnenr(_ listener: @escaping ((_ cell: UICollectionViewCell, _ indexPath: IndexPath) -> Void)){
         setOnCellClickClosure = { (cell, indexPath) in
+            listener(cell, indexPath)
+        }
+    }
+    
+    /**
+     Declick event of cell for SGListView.
+     - Parameter listener: A handler for click event. `cell` is loaded UICollectionViewCell; `indexPath` is contained section and row data structure.
+     */
+    public func setOnCellDeclickListener(_ listener: @escaping ((_ cell: UICollectionViewCell, _ indexPath: IndexPath) -> Void)){
+        setOnCellDeclickClosure = { (cell, indexPath) in
+            listener(cell, indexPath)
+        }
+    }
+    
+    /**
+     Will be executed click event of cell for SGListView.
+     - Parameter listener: A handler for click event. `cell` is loaded UICollectionViewCell; `indexPath` is contained section and row data structure.
+     */
+    public func setOnCellWillClickListener(_ listener: @escaping ((_ cell: UICollectionViewCell, _ indexPath: IndexPath) -> Void)){
+        setOnCellWillClickClosure = { (cell, indexPath) in
+            listener(cell, indexPath)
+        }
+    }
+    
+    /**
+     The click of cell for SGListView has been finished event.
+     - Parameter listener: A handler for click event. `cell` is loaded UICollectionViewCell; `indexPath` is contained section and row data structure.
+     */
+    public func setOnCellFinishClickListener(_ listener: @escaping ((_ cell: UICollectionViewCell, _ indexPath: IndexPath) -> Void)){
+        setOnCellFinishClickClosure = { (cell, indexPath) in
             listener(cell, indexPath)
         }
     }
@@ -142,6 +207,10 @@ extension SGListView{
         }
     }
     
+    public func getReusableId() -> String{
+        return REUSABLE_ID
+    }
+    
 }
 
 // MARK: - UICollectionViewDelegate.
@@ -151,6 +220,32 @@ extension SGListView{
         let cell = collectionView.cellForItem(at: indexPath)!
         
         setOnCellClickClosure!(cell, indexPath)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath)!
+        
+        setOnCellDeclickClosure!(cell, indexPath)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath)!
+        
+        setOnCellWillClickClosure!(cell, indexPath)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath)!
+        
+        setOnCellFinishClickClosure!(cell, indexPath)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
+        return setOnCellWhetherClickClosure!(indexPath)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        setOnCellWillDisplayClosure!(indexPath)
     }
     
 }
