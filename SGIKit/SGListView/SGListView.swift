@@ -7,7 +7,19 @@
 
 import UIKit
 
+/**
+ SGListView, designed with trailing closure function features to easy use, and it's also a effictive widget to update.(use diff to operation.)
+ */
 class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout{
+    
+    enum DataListOperationType {
+        case none
+        case insert
+        case delete
+        case update
+        case move
+        case mixup
+    }
     
     enum ListViewDirection {
         case horizontal
@@ -36,32 +48,46 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     private var setOnCellWillDisplayClosure: SetOnCellWillDisplayClosure?
     
     /// Click event of cell for UICollectionView.
-    private var setOnCellClickClosure: SetOnCellClickClosure?
+    private var setOnCellClickClosure:       SetOnCellClickClosure?
     
     /// Declick event of cell for UICollectionView.
-    private var setOnCellDeclickClosure: SetOnCellDeclickClosure?
+    private var setOnCellDeclickClosure:     SetOnCellDeclickClosure?
     
     /// Will click event of cell for UICollectionView.
-    private var setOnCellWillClickClosure: SetOnCellWillClickClosure?
+    private var setOnCellWillClickClosure:   SetOnCellWillClickClosure?
     
     /// The click event has been finished event of cell for UICollectionView.
     private var setOnCellFinishClickClosure: SetOnCellFinishClickClosure?
     
     /// To bind cell and outside data source(dataList) with index.
-    private var setOnCellDataBindClosure: SetOnCellDataBindClosure?
-    
-    /// Wehther the cell should be display.
-    private var setOnCellWhetherClickClosure: SetOnCellWhetherClickClosure?
+    private var setOnCellDataBindClosure:    SetOnCellDataBindClosure?
     
     /// SGListView data list, which will set delegate and dataSource to SGListView itself while didiSet, consequentlly it could be initing and defining safely when used.
-    public var dataList: Array<Array<Any>>?{
+    public var dataList: Array<NSObject>?{
         didSet{
-            self.delegate = self
-            self.dataSource = self
+            if self.isFirstLoadDataList {
+                self.delegate = self
+                self.dataSource = self
+            } else {
+     //           self.updateItems(old: oldDataList!, new: dataList!)
+            }
+            self.isFirstLoadDataList = false
         }
     }
     
-    ///  Generate reusable id when did set. eg. `SLV_MYCELL_528`.
+    typealias DFAW = DiffAware
+    
+    private var oldDataList: Array<NSObject>?
+    
+    private var mChanges: Array<NSObject>?
+    
+    /// The plain expression of `dataList` changes.
+    private var dataListOperationType: DataListOperationType = .none
+    
+    /// Indicate the `dataList` whether first load for update operation.
+    private var isFirstLoadDataList: Bool = true
+    
+    /// Generate reusable id when did set. eg. `SLV_MYCELL_528`.
     private var cellClass: AnyClass! {
         didSet{
             REUSABLE_ID = "\(REUSABLE_ID)_\(NSStringFromClass(cellClass).uppercased())_\(Int(arc4random_uniform(1000)))"
@@ -81,23 +107,6 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
         super.reloadItems(at: indexPaths)
     }
     
-    /// Reload accurate position of cell rather than reload all data.
-    override func reloadData() {
-        super.reloadData()
-    }
-    
-    override func deleteItems(at indexPaths: [IndexPath]) {
-        super.deleteItems(at: indexPaths)
-    }
-    
-    override func moveItem(at indexPath: IndexPath, to newIndexPath: IndexPath) {
-        super.moveItem(at: indexPath, to: newIndexPath)
-    }
-    
-    override func insertItems(at indexPaths: [IndexPath]) {
-        super.insertItems(at: indexPaths)
-    }
-    
     // MARK: - Init configuration.
     private final func initConfig(cellClass: AnyClass, reusableId: String){
         self.register(cellClass, forCellWithReuseIdentifier: reusableId)
@@ -105,7 +114,7 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     }
     
     private final func initDirection(direction: ListViewDirection){
-        layoutItem = UICollectionViewFlowLayout()
+   //     layoutItem = UICollectionViewFlowLayout()
         if direction == .horizontal {
             layoutItem.scrollDirection = .horizontal
         }
@@ -113,6 +122,8 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
             layoutItem.scrollDirection = .vertical
         }
         // Load more configuration...
+        
+        
 
     }
     
@@ -134,18 +145,74 @@ class SGListView: UICollectionView, UICollectionViewDelegate, UICollectionViewDa
     
 }
 
-// MARK: - Outside Method.
+// MARK: - Dynamic DataSource Operation of Diff.
 extension SGListView{
     
-    /**
-     Wehther the cell could be action the click event.
-     - Parameter listener: A handler for click event. `indexPath` is contained section and row data structure.
-     */
-    public func setOnCellWhetherClickListener(_ listener: @escaping ((_ indexPath: IndexPath) -> Bool)){
-        setOnCellWhetherClickClosure = { (indexPath) in
-            return listener(indexPath)
-        }
+    /// Reload accurate position of cell rather than reload all data.
+    override func reloadData() {
+        super.reloadData()
     }
+    
+    fileprivate func dynamicOperateListView<T: DiffAware>(old: Array<T>, new: Array<T>) -> DataListOperationType{
+        let changes = diff(old: old, new: new)
+     //   mChanges = changes
+        
+        // Only delete.
+        if changes[0].delete != nil && changes[0].insert == nil && changes[0].move == nil && changes[0].replace == nil {
+            return .delete
+        }
+        // Only insert.
+        if changes[0].delete == nil && changes[0].insert != nil && changes[0].move == nil && changes[0].replace == nil {
+            return .insert
+        }
+        // Only move.
+        if changes[0].delete == nil && changes[0].insert == nil && changes[0].move != nil && changes[0].replace == nil {
+            return .move
+        }
+        // Only replace.
+        if changes[0].delete == nil && changes[0].insert == nil && changes[0].move == nil && changes[0].replace != nil {
+            return .update
+        }
+        // Mixup operation.
+        if changes[0].delete != nil && changes[0].insert != nil && changes[0].move == nil && changes[0].replace == nil {
+            return .mixup
+        }
+        
+        return .none
+    }
+    
+//    fileprivate func updateItems<T: DiffAware>(old: Array<T>, new: Array<T>){
+//    //    mChanges = mChanges as! Array<DiffAware>
+//        // FIXME: - WARN TERB.
+//        let changes = diff(old: old, new: new)
+//
+//        switch dataListOperationType{
+//        case .none:
+//            break
+//        case .insert:
+//            insertItems(at: changes[0])
+//            changes.forEach { j in
+//                insertItems(at: IndexPath(row: j.insert!.index, section: 0))
+//            }
+//
+//        case .move:
+//            moveItem(at: <#T##IndexPath#>, to: <#T##IndexPath#>)
+//
+//        case .update:
+//
+//            break
+//        case .delete:
+//            deleteItems(at: <#T##[IndexPath]#>)
+//
+//        case .mixup:
+//            break
+//        }
+//    }
+    
+}
+
+// MARK: - Outside Method.
+extension SGListView{
     
     /**
      Will display event of cell for SGListView.
@@ -217,35 +284,43 @@ extension SGListView{
 extension SGListView{
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath)!
-        
-        setOnCellClickClosure!(cell, indexPath)
+        if let cell = collectionView.cellForItem(at: indexPath) {
+            if setOnCellClickClosure != nil {
+                setOnCellClickClosure!(cell, indexPath)
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath)!
-        
-        setOnCellDeclickClosure!(cell, indexPath)
+        if let cell = collectionView.cellForItem(at: indexPath) {
+            if setOnCellDeclickClosure != nil {
+                setOnCellDeclickClosure!(cell, indexPath)
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath)!
-        
-        setOnCellWillClickClosure!(cell, indexPath)
+        if let cell = collectionView.cellForItem(at: indexPath) {
+            if setOnCellWillClickClosure != nil {
+                setOnCellWillClickClosure!(cell, indexPath)
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
-        let cell = collectionView.cellForItem(at: indexPath)!
-        
-        setOnCellFinishClickClosure!(cell, indexPath)
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return setOnCellWhetherClickClosure!(indexPath)
+        if let cell = collectionView.cellForItem(at: indexPath) {
+            if setOnCellFinishClickClosure != nil {
+                setOnCellFinishClickClosure!(cell, indexPath)
+            }
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        setOnCellWillDisplayClosure!(indexPath)
+        if collectionView.cellForItem(at: indexPath) != nil {
+            if setOnCellWillDisplayClosure != nil {
+                setOnCellWillDisplayClosure!(indexPath)
+            }
+        }
     }
     
 }
@@ -254,19 +329,11 @@ extension SGListView{
 extension SGListView{
     
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return dataList!.count
+        return 1
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return dataList![section].count
-    }
-    
-//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-//        return 20
-//    }
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return 20
+        return dataList!.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -274,9 +341,8 @@ extension SGListView{
 
         let cell = dequeueReusableCell(withReuseIdentifier: REUSABLE_ID, for: indexPath)
 
-        // Only outside index was availiable.
         if setOnCellDataBindClosure != nil {
-            setOnCellDataBindClosure!(cell, tempDataList[indexPath.section][indexPath.row], indexPath)
+            setOnCellDataBindClosure!(cell, tempDataList[indexPath.row], indexPath)
         }
         
         return cell

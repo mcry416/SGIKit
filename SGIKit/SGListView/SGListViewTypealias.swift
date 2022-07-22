@@ -58,11 +58,4 @@ extension SGListView{
      */
     public typealias SetOnCellFinishClickClosure = (_ cellClass: UICollectionViewCell, _ indexPath: IndexPath) -> Void
     
-    /**
-     Set on cell whether could click event. Using indexPath to action some method.
-     - Parameter indexPath: IndexPath as usually.
-     - Returns: Display result.
-     */
-    public typealias SetOnCellWhetherClickClosure = (_ indexPath: IndexPath) -> Bool
-    
 }

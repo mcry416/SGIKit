@@ -11,6 +11,7 @@ class MyCell: UICollectionViewCell {
     
     public var label: UILabel!
     public var label2: UILabel!
+    public lazy var image: UIImageView = self.createImage()
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -29,6 +30,19 @@ class MyCell: UICollectionViewCell {
         label2 = UILabel(frame: CGRect(x: self.contentView.frame.width - 130, y: (self.contentView.frame.height / 2) - 15, width: 70, height: 30))
         label2.textAlignment = .center
         self.addSubview(label2)
+        
+        self.addSubview(image)
     }
 
+}
+
+extension MyCell{
+    
+    fileprivate func createImage() -> UIImageView{
+        let imageView = UIImageView(frame: CGRect(x: 20, y: (self.contentView.frame.height / 2) - 25, width: 50, height: 50))
+        imageView.layer.cornerRadius = 25
+        imageView.layer.masksToBounds = true
+        return imageView
+    }
+    
 }
