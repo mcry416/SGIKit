@@ -11,13 +11,15 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 
 ## Standard General Interface Kit.
 
-### Basic Application Development Framework
+### Basic Application Development Framework (An efficient MVVM like architecture based on hash algorithm)
 
-- ### SGSquareViewLattice
+- ### SGItem (Boot view layer)
 
-- ### SGSquareView
+- ### Bundle (Boot model and closure layer)
 
-- ### SGFragment
+- ### SGFragment (An abstract section to manage item)
+
+- ### SGActivity (Top management container, container delegate)
 
 ### 1.Basic Widget
 
@@ -28,6 +30,12 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 - #### SGListView
 
 - #### SGTableView
+
+- #### SGMenuView
+
+- #### SGFloatVideoView
+
+- #### SGPopupView
 
 - #### SGNavigationBar
 
@@ -40,6 +48,10 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 - #### SGString
 
 - #### Log
+
+- #### HashKV
+
+- #### CachePool
 
 ## Standard General Interface Fast Kit.
 
