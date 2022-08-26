@@ -56,7 +56,7 @@ class Log{
         #endif
     }
     
-        public static func timeline( _ completionHandler: @escaping (() -> Void)){
+    public static func timeline( _ completionHandler: @escaping (() -> Void)){
         #if DEBUG
             let dformatter = DateFormatter()
             dformatter.dateFormat = "HH:mm:ss"
