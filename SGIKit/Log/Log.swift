@@ -56,4 +56,16 @@ class Log{
         #endif
     }
     
+        public static func timeline( _ completionHandler: @escaping (() -> Void)){
+        #if DEBUG
+            let dformatter = DateFormatter()
+            dformatter.dateFormat = "HH:mm:ss"
+            let dateStr = dformatter.string(from: Date())
+            let startTime = CFAbsoluteTimeGetCurrent()
+            completionHandler()
+            let endTime = CFAbsoluteTimeGetCurrent()
+            print("------> 🟥 [TIMELINE] \(dateStr) || Consume time: \((endTime - startTime) * 1000)ms🟥")
+        #endif
+    }
+    
 }
