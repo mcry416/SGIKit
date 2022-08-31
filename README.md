@@ -6,11 +6,13 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 
 |Base Name| Function / Features|
 |-|-|
-|SGSqaureView| A development forms|
+|SGLowCoupling| A development forms|
 |SGIKit(Basic widget & foudation)| Self define view subclass and extension|
 |SGIFKit| DSL development forms|
 
 ## Standard General Interface Kit.
+
+What we contains in here:
 
 ### Basic Application Development Framework (An efficient MVVM like architecture based on hash algorithm)
 
@@ -18,41 +20,67 @@ Standard General Interface Fast Kit. It's DSL development way which made of clos
 
 - ### Bundle (Boot model and closure layer)
 
-- ### SGFragment (An abstract section to manage item)
+- ### SGFragment (An abstract section to manage items)
 
 - ### SGActivity (Top management container, container delegate)
 
 ### 1.Basic Widget
 
-- #### SGButton
+- #### SGButton 
+A beautiful button with convenience usage.
 
 - #### SGImageView
+A beautiful and sensitive image view to use.
 
 - #### SGListView
+Big size data stream to show business view, which is more easyily to use than `UICollectionView`, and abondoned delegate design pattern to use.
 
 - #### SGTableView
+Vertical data stream to show various business view, which is more easily to use than 'UITableView', and abondoned delegate design pattern to use.
 
 - #### SGMenuView
+A popup style view to show an operation whether should be clicked, some operations form a menu.
 
 - #### SGFloatVideoView
+A float view that could be draged anywhere in view to presented a video.
 
 - #### SGPopupView
+A container to presented some widgets to popup.
 
 - #### SGNavigationBar
+A navigation bar to use in top of the view, which is beautiful and easy to use(really easy to use).
+
+- #### SGSettingsView
+A build pattern to generate three style settings view.
+
+- #### SGGoodsView
+A build pattern to generate a collection view that containes image view only.
 
 - #### SGImage
+An extension for UIImage.
 
 - #### SGToast
+A toast to show in the UIViewController.
 
 ### 2.Foundation Extension
 
 - #### SGString
+An extension for String.
 
 - #### Log
+A simplt log class to test in various class.
 
 - #### HashKV
+A simply K-V runtime cache class in application life cycle.
 
 - #### CachePool
+A cache class in application that initlized with various data structure.
+
+- #### Memory
+A tool to print the information for varible's ref or deliver value.
+
+- #### GramKit (Developing.)
+A tool like SnapKit for UIView and its subclass to make layout, notice its function to make layout rather than make constrains.
 
 ## Standard General Interface Fast Kit.
 
@@ -93,71 +121,6 @@ listView.setOnCellDataBindListener { cellClass, model, indexPath in
 listView.setOnCellClickListnenr { cell, indexPath in
 
 }
-
-```
-
-- SGFragment subclass in SGSquareView forms
-
-```swift
-import UIKit
-
-class SecondFragment: SGFragment {
-
-    var latticeListener: ((_ index: Int) -> Void)?
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-        self.initFragment()
-
-        super.datas = Array<SecondModel>()
-
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("error to init.")
-    }
-
-    override func bindBundle(_ bundle: Any) {
-        super.datas = bundle as? Array<SecondModel>
-        self.updateFragment(animated: true)
-    }
-
-}
-
-extension SecondFragment{
-
-    override func titleForSGSquareView(_ sgSquareView: SGSquareView) -> String {
-        return "  Second"
-    }
-
-    override func sgSquareViewAtIndex(_ sgSquareView: SGSquareView, index: Int) -> SGSquareViewLattice {
-        let lattice = SGSquareViewLattice()
-        lattice.size = CGSize(width: 100, height: 100)
-        let model = super.datas[index] as! SecondModel
-        lattice.image.image = UIImage(named: model.imageName)
-        return lattice
-    }
-
-    override func sgSquareViewClickedAtIndex(_ sgSquareView: SGSquareView, index: Int) {
-        if self.latticeListener != nil {
-            latticeListener!(index)
-        }
-    }
-
-}
-
-extension SecondFragment{
-
-    fileprivate func initFragment(){
-        self.layer.cornerRadius = 10
-        self.miniLatticeSpace = 0
-        self.backgroundColor = UIColor(red: 0.88, green: 0.88, blue: 0.98, alpha: 1)
-   //     self.isPageEnable = false
-    }
-
-}
-```
  
 
 - DSL apply in `viewDidLoad()`
