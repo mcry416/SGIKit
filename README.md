@@ -1,3 +1,4 @@
+# [![v4wP4x.png](https://s1.ax1x.com/2022/08/31/v4wP4x.png)](https://imgse.com/i/v4wP4x)
 # SGIKit
 Standard General Interface Kit. It contains useful extension and foundation subclass which made of delegate/inherit/singleston/adapter desigen pattern.
 Standard General Interface Fast Kit. It's DSL development way which made of closure and extension by Swift language features.
