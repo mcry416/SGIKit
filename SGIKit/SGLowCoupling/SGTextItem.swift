@@ -24,12 +24,18 @@ class SGTextItem: SGItem {
     override func itemWillRotate(rawValue: Int) {
         switch rawValue {
         case 1:
-            self.label.frame = CGRect(x: 0, y: 0, width: kSCREEN_WIDTH, height: self.label.frame.height)
+            self.label.frame = CGRect(x: 0, y: 0, width: kSCREEN_WIDTH, height: label.frame.height)
         case 3:
-            label.frame = CGRect(x: 0, y: 0, width: kSCREEN_HEIGHT, height: label.frame.height)
+            self.label.frame = CGRect(x: 0, y: 0, width: kSCREEN_HEIGHT, height: label.frame.height)
+        case 4:
+            self.label.frame = CGRect(x: 0, y: 0, width: kSCREEN_HEIGHT, height: label.frame.height)
         default:
             break
         }
+    }
+    
+    override func bindBundleLandscape(_ bundle: Any?) {
+        
     }
 
 }

@@ -22,11 +22,6 @@ import AVFoundation
  */
 class SGActivity: UIScrollView {
     
-    enum Direction {
-        case vertical
-        case horizontal
-    }
-    
     /// Delegate for SGActivity.
     public var activityDelegate: SGActivityDelegate?
     
@@ -36,22 +31,18 @@ class SGActivity: UIScrollView {
     /// Inside items collection.
     public var items: Array<SGItem> = Array<SGItem>()
     
-    /// SGItem organizational forms.
-    private var direction: Direction = .vertical
-    
     /// The activity whether in portrait model.
-    private var isInPortraitModel: Bool = true
+    private var isInPortraitMode: Bool = true
+    
+    /// The original item width that loaded in activity firstly, be used for rotated screen.
+    private var originalItemWidth: CGFloat = 0
     
     public var isScrollToTopTouchOff: Bool = false
-    
-    /// When device was rotated called this method
-    public var activityWillRotate: ((_ rawValue: Int) -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         
         _initView()
-
     }
     
     required init?(coder: NSCoder) {
@@ -61,7 +52,6 @@ class SGActivity: UIScrollView {
     override func didMoveToWindow() {
 
         _reload()
-        
     }
     
 }
@@ -95,11 +85,15 @@ extension SGActivity{
                 let sideSpacing: CGFloat = fragment?.sideSpacing ?? 0
                 if let fragmentDelegate = fragment?.delegate {
                     
-                    // Enmerated current fragment to get sub item.
+                    // Enumerated current fragment to get sub item.
                     for itemIndex in 0..<fragmentDelegate.numberOfItemForFragment(fragment!) {
                         
                         // Get current fragment's sub item by index.
                         let subItem = fragmentDelegate.itemAtIndex(itemIndex, fragment: fragment!)
+                        
+                        // Store the original width for the screen was rotated.
+                        subItem.originalWidth = subItem.frame.width
+                        
                         subItem.frame = CGRect(x: (sideSpacing / 2),
                                                y: yValue,
                                                width: subItem.frame.width - sideSpacing,
@@ -203,10 +197,13 @@ extension SGActivity{
             // Iterate fragment to iterate items.
             fragments.forEach { fragment in
                 fragment.items.forEach { item in
+                    Log.error("sideSpacing: \(fragment.sideSpacing / 2)")
                     item.frame = CGRect(x: fragment.sideSpacing / 2,
                                         y: yValue,
-                                        width: item.frame.width,
+                                        width: item.originalWidth - fragment.sideSpacing,
                                         height: item.frame.height)
+                    
+                    Log.warning("Frame: \(item.frame)")
                     
                     // Sub item frame has been setted, then call the method of 'itemWillRotate'.
                     UIView.animate(withDuration: 0.382) {
@@ -231,7 +228,7 @@ extension SGActivity{
                 self.contentSize = CGSize(width: self.frame.width, height: yValue)
             }
             
-            isInPortraitModel = true
+            isInPortraitMode = true
             
             if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
                 var underYValue: CGFloat = 0
@@ -263,29 +260,49 @@ extension SGActivity{
              ------------------------
                  -     -
              */
+//            var yValue: CGFloat = 0
+//            for subItem in self.items {
+//                subItem.frame = CGRect(x: 0,
+//                                       y: yValue,
+//                                       width: kSCREEN_HEIGHT,
+//                                       height: subItem.frame.height)
+//                UIView.animate(withDuration: 0.5) {
+//                    subItem.itemWillRotate(rawValue: 3)
+//                }
+//                subItem.itemWillRotate(rawValue: 3)
+//                yValue  = subItem.frame.height + yValue
+//            }
+//
             var yValue: CGFloat = 0
-            for subItem in self.items {
-                subItem.frame = CGRect(x: 0,
-                                       y: yValue,
-                                       width: kSCREEN_HEIGHT,
-                                       height: subItem.frame.height)
-                UIView.animate(withDuration: 0.5) {
-                    subItem.itemWillRotate(rawValue: 3)
+            // Iterate fragment to iterate items.
+            fragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.frame = CGRect(x: fragment.sideSpacing / 2,
+                                        y: yValue,
+                                        width: kSCREEN_HEIGHT - fragment.sideSpacing,
+                                        height: item.frame.height)
+                    
+                    // Sub item frame has been setted, then call the method of 'itemWillRotate'.
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+
+                    // When activity execute this case, which means it's not first time to load,
+                    // item need to re-bind bundle in this situation consequently.
+                    if item.bundle != nil {
+                        item.bindBundleLandscape(item.bundle ?? nil)
+                    }
+
+                    yValue = item.frame.height + yValue
                 }
-      //          subItem.itemWillRotate(rawValue: 3)
-                yValue  = subItem.frame.height + yValue
-            }
-            
-            if activityWillRotate != nil {
-                activityWillRotate!(3)
             }
             
             UIView.animate(withDuration: 0.5) {
-                self.frame = CGRect(x: 0, y: 44, width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                self.frame = CGRect(x: 0, y: self.frame.origin.y, width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
                 self.contentSize = CGSize(width: kSCREEN_HEIGHT, height: yValue)
             }
             
-            isInPortraitModel = false
+            isInPortraitMode = false
             
             if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
                 var underYValue: CGFloat = 0
@@ -293,7 +310,25 @@ extension SGActivity{
                     underYValue = underYValue - item.frame.height
                     item.frame = CGRect(x: 0,
                                         y: underYValue,
-                                        width: self.contentSize.width,
+                                        width: kSCREEN_HEIGHT,
+                                        height: item.frame.height)
+                    Log.warning("frame: \(item.frame)")
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+            }
+            if let bottomFragment = activityDelegate?.bottomFragmentForSGActivity?(self) {
+                var underYValue: CGFloat = self.contentSize.height
+                bottomFragment.items.forEach { item in
+                    underYValue = underYValue + item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: underYValue,
+                                        width: kSCREEN_HEIGHT,
                                         height: item.frame.height)
                     
                     UIView.animate(withDuration: 0.382) {
@@ -304,7 +339,6 @@ extension SGActivity{
                         item.bindBundle(item.bundle)
                     }
                 }
-                
             }
             
         case 4:
@@ -320,9 +354,9 @@ extension SGActivity{
             var yValue: CGFloat = 0
             fragments.forEach { fragment in
                 fragment.items.forEach { item in
-                    item.frame = CGRect(x: fragment.landscapeSideSpacing / 2,
+                    item.frame = CGRect(x: fragment.sideSpacing / 2,
                                         y: yValue,
-                                        width: kSCREEN_HEIGHT - fragment.landscapeSideSpacing,
+                                        width: kSCREEN_HEIGHT - fragment.sideSpacing,
                                         height: item.frame.height)
                     UIView.animate(withDuration: 0.382) {
                         item.itemWillRotate(rawValue: 4)
@@ -339,10 +373,67 @@ extension SGActivity{
                 self.contentSize = CGSize(width: kSCREEN_HEIGHT, height: yValue)
             }
             
-            isInPortraitModel = false
-            break
+            isInPortraitMode = false
         default:
             break
+        }
+    }
+    
+    // MARK: - Mount life cycle.
+    
+    /**
+     Mount to ViewController to execute this method, this method will called fragment's mount life cycle method.
+     */
+    @objc public final func activityDidLoad(){
+        if let activityDelegate = self.activityDelegate{
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                fragment?.fragmentDidLoad()
+            }
+        }
+    }
+    /**
+     Mount to ViewController to execute this method, this method will called fragment's mount life cycle method.
+     */
+    @objc public final func activityWillAppear(){
+        if let activityDelegate = self.activityDelegate{
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                fragment?.fragmentWillAppear()
+            }
+        }
+    }
+    /**
+     Mount to ViewController to execute this method, this method will called fragment's mount life cycle method.
+     */
+    @objc final func activityDidAppear(){
+        if let activityDelegate = self.activityDelegate{
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                fragment?.fragmentDidAppear()
+            }
+        }
+    }
+    /**
+     Mount to ViewController to execute this method, this method will called fragment's mount life cycle method.
+     */
+    @objc final func activityWillDisappear(){
+        if let activityDelegate = self.activityDelegate{
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                fragment?.fragmentWillDisappear()
+            }
+        }
+    }
+    /**
+     Mount to ViewController to execute this method, this method will called fragment's mount life cycle method.
+     */
+    @objc final func activityDidDisappear(){
+        if let activityDelegate = self.activityDelegate{
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                fragment?.fragmentDidDisappear()
+            }
         }
     }
     
@@ -425,6 +516,22 @@ extension SGActivity{
         
         // Update content size.
         self.contentSize = CGSize(width: self.frame.width, height: currentYValue)
+        
+        Log.debug("Content height: \(self.contentSize.height)")
+        
+        if let activityDelegate = self.activityDelegate {
+            // If exist the bottom fragment, and update its frame.
+            if let bottomFragment = activityDelegate.bottomFragmentForSGActivity?(self) {
+                let subItem = bottomFragment.delegate?.itemAtIndex(0, fragment: bottomFragment)
+                subItem?.frame = CGRect(x: 0,
+                                        y: self.contentSize.height + 100,
+                                        width: subItem!.frame.width,
+                                        height: subItem!.frame.height)
+                if subItem!.bundle != nil {
+                    subItem!.bindBundle(subItem!.bundle)
+                }
+            }
+        }
     }
     
     /**
@@ -569,7 +676,7 @@ extension SGActivity{
     open func setReloadData(){
         items.forEach { item in
             if item.bundle != nil {
-                if isInPortraitModel {
+                if isInPortraitMode {
                     // Execute portrait refresh strategy.
                     item.bindBundle(item.bundle)
                 } else{

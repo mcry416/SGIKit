@@ -49,6 +49,9 @@ class SGItem: UIView, SGBindBundleDelegate{
     /// Dynamic height for item.
     public var estimateDynamicHeight: CGFloat = 0
     
+    /// Store the original width for the screen was rotated. Do not modify this propety anytime.
+    public var originalWidth: CGFloat = 0
+    
 }
 
 // MARK: - Outside method.

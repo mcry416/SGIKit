@@ -57,9 +57,6 @@ class SGFragment: NSObject{
     /// Item right and left spacing, default 0.
     public var sideSpacing: CGFloat = 0
     
-    /// Item right and left spacing in landscape mode, defalut 0.
-    public var landscapeSideSpacing: CGFloat = 0
-    
     /// Item animated interval , default 0.382.
     public var animatedInterval: TimeInterval = 0.382
     
@@ -79,11 +76,6 @@ class SGFragment: NSObject{
     
     override init() {
         super.init()
-        
-        if loadedCompletionClosure != nil {
-            loadedCompletionClosure!(items)
-        }
-        
     }
     
 }
@@ -115,7 +107,42 @@ extension SGFragment{
      When device was rotated and overrided this method to process the condition of rotated.
      - Parameter rawValue: Spin code, 0 meas normally, 1 means device back, 2 means volume button at the bottom, 3 means power button at the bottom.
      */
-    open func fragmentWillRotate(rawValue: Int){
+    @objc open func fragmentWillRotate(rawValue: Int){
+        
+    }
+    
+    /**
+     When fragment did load at activity and this method will be called. Override the method to get callback method.
+     */
+    @objc open func fragmentDidLoad(){
+        
+    }
+    
+    /**
+     When fragment will appear at activity and this method will be called. Override the method to get callback method.
+     */
+    @objc open func fragmentWillAppear(){
+        
+    }
+    
+    /**
+     When fragment did appear at activity and this method will be called. Override the method to get callback method.
+     */
+    @objc open func fragmentDidAppear(){
+        
+    }
+    
+    /**
+     When fragment will disappear at activity and this method will be called. Override the method to get callback method.
+     */
+    @objc open func fragmentWillDisappear(){
+        
+    }
+    
+    /**
+     When fragment did disappear at activity and this method will be called. Override the method to get callback method.
+     */
+    @objc open func fragmentDidDisappear(){
         
     }
     
@@ -141,8 +168,6 @@ extension SGFragment{
                         item.bindBundle(item.bundle)
                     }
                 }
-                // Execute bind competion closure.
-                self.bindCompletionClosure!(self.items[iterateIndex], self.items[iterateIndex].bundle as Any, iterateIndex)
             }
         }
     }
