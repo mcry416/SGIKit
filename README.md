@@ -32,6 +32,9 @@ A beautiful button with convenience usage.
 - #### SGImageView
 A beautiful and sensitive image view to use.
 
+- #### SGExcelView
+A collection view(Its looks like Excel rather than `UICollectionView`) to present via datas.
+
 - #### SGListView
 Big size data stream to show business view, which is more easyily to use than `UICollectionView`, and abondoned delegate design pattern to use.
 
@@ -62,16 +65,28 @@ An extension for UIImage.
 - #### SGToast
 A toast to show in the UIViewController.
 
-### 2.Foundation Extension
+- #### SGRichText
+A chain called method to generate `NSAttributedString`.
 
-- #### SGString
-An extension for String.
+### 2.UIKit/Foundation Extension
+
+- #### UIImageView+Extension
+Provide convenience way to set URL for image, whichs use `LRU` algorithm to make sure memory normally.
+
+- #### UIView+Extension
+Use runtime to add a convenience click listener with method.
+
+- #### GCD+Extension
+Provide ability of oiperating queue, thread safety.
+
+- #### String+Extension
+An extension for String, likes text height or width, string cut.
 
 - #### Log
-A simplt log class to test in various class.
+A simply log class to test in various class.
 
 - #### HashKV
-A simply K-V runtime cache class in application life cycle.
+A simply K-V runtime cache class in application life cycle, which could make thread safety.
 
 - #### CachePool
 A cache class in application that initlized with various data structure.
@@ -121,6 +136,7 @@ listView.setOnCellDataBindListener { cellClass, model, indexPath in
 listView.setOnCellClickListnenr { cell, indexPath in
 
 }
+```
  
 
 - DSL apply in `viewDidLoad()`
@@ -141,6 +157,10 @@ listView.setOnCellClickListnenr { cell, indexPath in
                   self.ImageView(name: "ef"),
                   self.ImageView(name: "ef")
                  ]
+             }]}   
+                 
+```    
+            
              }]
         }
 ```
