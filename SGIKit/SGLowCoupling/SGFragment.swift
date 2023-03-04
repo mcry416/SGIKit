@@ -41,15 +41,16 @@ import UIKit
  - Originized form.
  
  As you can see, create a class that inherited from SGFragment and implements reqiured method, it's a basic frgament.
+ 
+ - Note: The SGFragment whose `isActive` attribute is true has the highest priority in the architecture,  the vice-SGFragment(If the delegate is non-nil)is less than above.
+ And the source of `fragments` take the next place(The attribute of `isInterest` will action in this mode), last the lowest priority is bottom and top SGFragment(If the delegate is non-nil).
  */
 class SGFragment: NSObject{
     
     public weak var delegate: SGFragmentDelegate?
     
-    /// SGFragment that
+    /// SGFragment sub items cache.
     public var items: Array<SGItem> = Array<SGItem>()
-    
-    public var bundles: Array<NSObject> = Array<NSObject>()
     
     /// SGFragment position that arranged in activity.
     public var fragmentPosition: Int = 0
@@ -60,23 +61,17 @@ class SGFragment: NSObject{
     /// Item animated interval , default 0.382.
     public var animatedInterval: TimeInterval = 0.382
     
+    /// Indicate the fragment is be interested in roate mode for SGActivity, and value is true means the fragment will faded. Defalut is `false`.
+    public var isInterest: Bool = false
+    
+    /// Indicate the fragment is be actived in rotated mode for SGActivity, and value is true means the fragment will keep the life cycle and outlooks as the same. Defalut is  `false`.
+    public var isActive: Bool = false
+    
     /// When SGFragment was instanced to use this closure.
     private var loadedCompletionClosure: ((_ items: Array<SGItem>) -> Void)?
     
     /// When items was binded to use this closure.
     private var bindCompletionClosure: ((_ item: SGItem, _ bundle: Any, _ index: Int) -> Void)?
-    
-    /**
-     Normally initlized to use delegate, rather than use `override init()`.
-     Cause this problem is that SGFragment is inherited from NSObject rather than UIView, NSObject did not have the method of `didMoveToWidnow()`.
-     */
-    public final func nInit(){
-        
-    }
-    
-    override init() {
-        super.init()
-    }
     
 }
 

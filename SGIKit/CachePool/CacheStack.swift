@@ -11,6 +11,7 @@ public struct CacheStack<T> {
     private var elements = [T]()
     public init() {}
      
+    @discardableResult
     public mutating func pop() -> T? {
         return self.elements.popLast()
     }

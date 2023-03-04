@@ -33,6 +33,7 @@ extension Toast{
     fileprivate func createTitleLabel() -> UILabel{
         let label = UILabel()
         label.textColor = .white
+        label.numberOfLines = 0
         label.font = UIFont.systemFont(ofSize: 13, weight: UIFont.Weight.light)
         label.textAlignment = .center
         return label
@@ -61,7 +62,7 @@ extension UIViewController{
             toastPoint = CGPoint(x: self.view.frame.width / 2,
                                  y: self.view.frame.height - 150)
         }
-        let contentSize: CGSize = CGSize(width: content.textAutoWidth(height: 25, font: .systemFont(ofSize: 13, weight: UIFont.Weight.light))  + 15,
+        let contentSize: CGSize = CGSize(width: content.sg_width(maxH: 25, font: .systemFont(ofSize: 13, weight: UIFont.Weight.light))  + 15,
                                          height: 25 + 0)
         toastPoint = CGPoint(x: toastPoint.x - contentSize.width / 2,
                              y: toastPoint.y)

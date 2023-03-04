@@ -6,8 +6,10 @@
 //
 
 import UIKit
-import CoreMedia
 
+/**
+ The SGActivity executes interface method.(or named it `ActivityModel`)
+ */
 @objc protocol SGActivityDelegate{
     
     /**
@@ -40,13 +42,43 @@ import CoreMedia
     @objc optional func bottomFragmentForSGActivity(_ activity: SGActivity) -> SGFragment?
     
     /**
-     When user will drop down the activity.
+     Return an optional fragment for the activity, it will show in the activity at the condition of iPhone was rotated, imagine a scene that UIViewController was presented a view in normal mode and the iPhone was rotated, the iPhone was need a new view to present in this scene for user.
+     - Parameter activity: SGActivity instance, user could ignore this. It means only concrete viewModel in the ViewContoller generallery speaking.
+     - Returns: SGFragment instance that used for iPhone was rotated.
      */
-    @objc optional func sgActivityWillDropDown(_ activity: SGActivity)
+    @objc optional func viceFragmentForSGActivity(_ activity: SGActivity) -> SGFragment?
     
-    @objc optional func sgActivityDidDropDown(_ activity: SGActivity)
+    /**
+     Return an optional fragment for the activity, it will show in the activity at the condition of implments this method and called the method of `setEnablePlaceholderFragment()` only.
+     - Parameter activity: SGActivity instance, user could ignore this. It means only concrete viewModel in the ViewContoller generallery speaking.
+     - Returns: SGFragment instance that used for placeholder.
+     */
+    @objc optional func placeholderFragmentForSGActivity(_ activity: SGActivity) -> SGFragment?
     
-    @objc optional func sgActivityWillDropUp(_ activity: SGActivity)
+    /**
+     Return a attrbuted string for the top refresh control.
+     - Parameter activity: SGActivity instance, user could ignore this. It means only concrete viewModel in the ViewContoller generallery speaking.
+     - Returns: The attrbuted string for top refresh control.
+     */
+    @objc optional func topRefreshAttributedTitleForSGActivity(_ activity: SGActivity) -> NSAttributedString?
     
-    @objc optional func sgActivityDidDropUp(_ activity: SGActivity)
+    /**
+     When user swiped the top refresh control and listen the action.
+     */
+    @objc optional func topRefreshListenerForSGActivity(_ activity: SGActivity)
+    
+    @objc optional func bottomRefreshAttributedTitleForSGActivity(_ activity: SGActivity) -> NSAttributedString?
+    
+    @objc optional func bottomRefreshListenerForSGActivity(_ activity: SGActivity)
+    
+    @objc optional func activityWillAppear()
+    
+    @objc optional func activityDidAppear()
+    
+    @objc optional func activityDidLoad()
+    
+    @objc optional func activityWillDisappear()
+    
+    @objc optional func activityDidDisappear()
+
 }

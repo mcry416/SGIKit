@@ -22,9 +22,9 @@ class SGNavigationBar: UIView {
     /// Right view padding for right content.
     private let RIGHT_PADDING: CGFloat = 13
     /// Right button image name.
-    private let RIGHT_IMAGE_NAME: String = "back"
+    private let RIGHT_IMAGE_NAME: String = "sg_navigationbar_back"
     /// Left button image name.
-    private let LEFT_IMAGE_NAME: String = "back"
+    private let LEFT_IMAGE_NAME: String = "sg_navigationbar_back"
     
     // MARK: - Set & get varibales.
     
@@ -68,11 +68,11 @@ class SGNavigationBar: UIView {
         }
     }
     
-    private var _isFullScreen: Bool?
+    private var _isFullScreen: Bool = false
     /// NavigationBar whether should be override status bar.
     public var isFullScreen: Bool?{
         set{
-            _isFullScreen = newValue ?? false
+            _isFullScreen = newValue!
             if _isFullScreen == true {
                 self.resetFrameInFullScreen()
             } else {
@@ -133,7 +133,18 @@ class SGNavigationBar: UIView {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+//        if previousTraitCollection?.verticalSizeClass.rawValue == 1 {
+//            _isFullScreen ? resetFrameInFullScreen() : resetFrameInUnfullScreen()
+//        }
+//        if previousTraitCollection?.verticalSizeClass.rawValue == 2 {
+//            resetFrameInLandscape()
+//        }
+    }
+    
 }
 
 // MARK: - Boot Convenience Init.
@@ -228,26 +239,26 @@ extension SGNavigationBar{
                                        width: self.effectView.frame.width,
                                        height: self.effectView.frame.height + kSafeTopOffset())
         self.leftContent.frame = CGRect(x: 0,
-                                        y: kSafeTopOffset(),
+                                        y: 0,
                                         width: CONTENT_WIDTH,
                                         height: kNavigationBarHight())
         self.centerContent.frame = CGRect(x: self.leftContent.frame.maxX,
-                                          y: kSafeTopOffset(),
+                                          y: 0,
                                           width: kScreenWidth() - (CONTENT_WIDTH * 2),
                                           height: self.centerContent.frame.height)
         self.rightContent.frame = CGRect(x: self.centerContent.frame.maxX,
-                                         y: kSafeTopOffset(),
+                                         y: 0,
                                          width: CONTENT_WIDTH,
                                          height: self.rightContent.frame.height)
         self.bottomLine.frame = CGRect(x: 0,
-                                       y: kNavigationBarHight() + kStatusBarHeight() - 0.5,
+                                       y: kNavigationBarHight() - 0.5,
                                        width: kScreenWidth(),
                                        height: 0.5)
     }
     
     private func resetFrameInUnfullScreen(){
         self.frame = CGRect(x: 0,
-                            y: kSafeTopOffset(),
+                            y: kStatusBarHeight(),
                             width: kScreenWidth(),
                             height: kNavigationBarHight())
         self.effectView.frame = CGRect(x: self.frame.origin.x,
@@ -255,9 +266,53 @@ extension SGNavigationBar{
                                        width: self.frame.width,
                                        height: self.frame.height)
         self.leftContent.frame = CGRect(x: 0,
-                                        y: kSafeTopOffset(),
+                                        y: 0,
                                         width: CONTENT_WIDTH,
-                                        height: self.leftContent.frame.height)
+                                        height: kNavigationBarHight())
+        self.centerContent.frame = CGRect(x: CONTENT_WIDTH,
+                                          y: 0,
+                                          width: self.frame.width - (CONTENT_WIDTH * 2),
+                                          height: kNavigationBarHight())
+        self.rightContent.frame = CGRect(x: self.centerContent.frame.maxX,
+                                         y: 0,
+                                         width: CONTENT_WIDTH,
+                                         height: kNavigationBarHight())
+        self.bottomLine.frame = CGRect(x: 0,
+                                       y: kNavigationBarHight() - 0.5,
+                                       width: kScreenWidth(),
+                                       height: 0.5)
+        
+        if self.leftContent.subviews.count > 0{
+            let subviewOfLeft: UIView = self.leftContent.subviews[0]
+            subviewOfLeft.frame = CGRect(x: 0,
+                                         y: 0,
+                                         width: self.leftContent.frame.width,
+                                         height: self.leftContent.frame.height)
+        }
+        
+        if self.centerContent.subviews.count > 0{
+            let subviewOfCenter: UIView = self.centerContent.subviews[0]
+            subviewOfCenter.frame = CGRect(x: 0,
+                                           y: 0,
+                                           width: self.centerContent.frame.width,
+                                           height: self.centerContent.frame.height)
+        }
+
+    }
+    
+    private func resetFrameInLandscape(){
+        self.frame = CGRect(x: 0,
+                            y: 0,
+                            width: kScreenWidth(),
+                            height: kNavigationBarHight())
+        self.effectView.frame = CGRect(x: self.frame.origin.x,
+                                       y: 0,
+                                       width: self.frame.width,
+                                       height: self.frame.height)
+        self.leftContent.frame = CGRect(x: 0,
+                                        y: 0,
+                                        width: CONTENT_WIDTH,
+                                        height: kNavigationBarHight())
         self.centerContent.frame = CGRect(x: CONTENT_WIDTH,
                                           y: 0,
                                           width: self.bounds.width - (CONTENT_WIDTH * 2),
@@ -270,6 +325,23 @@ extension SGNavigationBar{
                                        y: kNavigationBarHight() - 0.5,
                                        width: kScreenWidth(),
                                        height: 0.5)
+        
+        if self.leftContent.subviews.count > 0{
+            let subviewOfLeft: UIView = self.leftContent.subviews[0]
+            subviewOfLeft.frame = CGRect(x: 0,
+                                         y: 0,
+                                         width: self.leftContent.frame.width,
+                                         height: self.leftContent.frame.height)
+        }
+        
+        if self.centerContent.subviews.count > 0{
+            let subviewOfCenter: UIView = self.centerContent.subviews[0]
+            subviewOfCenter.frame = CGRect(x: 0,
+                                           y: 0,
+                                           width: self.centerContent.frame.width,
+                                           height: self.centerContent.frame.height)
+        }
+        
     }
     
 }
@@ -299,9 +371,9 @@ extension SGNavigationBar {
     private func createCenterLabel(text: String) -> UILabel {
         let label = UILabel()
         label.textAlignment = .center
-        label.textColor = .black
+        label.textColor = SGColor.black()
         label.text = text
-        label.frame.size = CGSize(width: self.centerContent.bounds.width, height: kNavigationBarHight())
+        label.frame.size = CGSize(width: self.centerContent.frame.width, height: kNavigationBarHight())
         return label
     }
     

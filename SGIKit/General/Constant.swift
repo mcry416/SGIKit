@@ -23,6 +23,8 @@ let kCENTER_POINT: CGPoint    = CGPoint(x: kHALF_WIDTH, y: kHALF_HEIGHT)
 
 let kBAR_HEIGHT: CGFloat      = 44
 
+let kSTATUS_HEIGHT: CGFloat   = 20
+
 let kWINDOW                   = UIApplication.shared.keyWindow
 
 let kTOP_PADDING: CGFloat     = kWINDOW?.safeAreaInsets.top ?? 0
@@ -34,6 +36,8 @@ let kEDGE_PADDING_12: CGFloat = 12
 let kEDGE_PADDING_14: CGFloat = 14
 
 let kEDGE_PADDING_16: CGFloat = 16
+
+let kSpacing: CGFloat         = 10
 
 let k12: CGFloat              = kEDGE_PADDING_12
 
@@ -47,10 +51,44 @@ let kORIENTATION              = UIDevice.current.orientation
 
 let kIS_FULL_SCREEN: Bool     = (kBOTTOM_PADDING == 0) ? false : true
 
-let kIS_IPAD: Bool            = (kSCREEN_HEIGHT > 2600) ? true : false
+let kSAFE_TOP: CGFloat        = UIApplication.shared.keyWindow?.safeAreaInsets.top ?? 0
 
+let kSAFE_BOTTOM: CGFloat     = UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0
+
+let kFONT_12: UIFont          = UIFont.systemFont(ofSize: 12)
+
+let kFONT_13: UIFont          = UIFont.systemFont(ofSize: 13)
+
+let kFONT_14: UIFont          = UIFont.systemFont(ofSize: 14)
+
+let kFONT_16: UIFont          = UIFont.systemFont(ofSize: 16)
+
+let kFONT_18: UIFont          = UIFont.systemFont(ofSize: 18)
 
 // MARK: - Functions.
+
+func kNAVIGATION_PUSH(_ context: UIViewController, _ vc: UIViewController){
+    context.navigationController?.pushViewController(vc, animated: true)
+}
+
+func kNAVIGATION_POP(_ context: UIViewController){
+    context.navigationController?.popViewController(animated: true)
+}
+
+func kPRESENT(_ context: UIViewController, _ vc: UIViewController){
+    context.present(vc, animated: true)
+}
+
+func kDISMISS( _ vc: UIViewController){
+    vc.dismiss(animated: true)
+}
+
+func centerFrame(x: CGFloat, y: CGFloat, text: String, fontSize: UIFont) -> CGRect{
+    CGRect(x: x,
+           y: y,
+           w: kSCREEN_WIDTH - x * 2,
+           h: text.ehi_height(font: fontSize, maxWidth: kSCREEN_WIDTH - x * 2))
+}
 
 /**
  Accroding to a given value by its root position value to caculate its center posotion value.

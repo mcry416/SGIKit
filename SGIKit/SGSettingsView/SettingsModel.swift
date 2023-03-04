@@ -20,6 +20,7 @@ class SettingsModel: NSObject {
         case blank
     }
     
+    var isSwitchEnable: Bool = false
     /// Right content.
     var text: String!
     /// Cell type.

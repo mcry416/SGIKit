@@ -14,7 +14,6 @@ class SGTextItem: SGItem {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        self.backgroundColor = .white
     }
     
     required init?(coder: NSCoder) {
@@ -56,6 +55,7 @@ extension SGTextItem{
     
     fileprivate func createLabel() -> UILabel{
         let label = UILabel(frame: CGRect(x: 0, y: 0, width: kSCREEN_WIDTH, height: 50))
+        label.numberOfLines = 0
         label.textAlignment = .center
         return label
     }

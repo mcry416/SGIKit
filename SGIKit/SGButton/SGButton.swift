@@ -161,7 +161,7 @@ extension SGButton {
     }
     
     private func initFrame(_ title: String){
-        self.frame.size = CGSize(width: title.getTextFitWidth(), height: title.getTextFitHeight())
+//        self.frame.size = CGSize(width: title.getTextFitWidth(), height: title.getTextFitHeight())
     }
     
 }
@@ -213,7 +213,7 @@ extension SGButton {
     
     private func setBasicAttributes(_ title: String){
         self.setTitleColor(UIColor.black, for: .normal)
-        self.frame.size = CGSize(width: UIScreen.main.bounds.width - 30, height: title.getTextFitHeight() + 8)
+//        self.frame.size = CGSize(width: UIScreen.main.bounds.width - 30, height: title.getTextFitHeight() + 8)
         self.layer.cornerRadius = 5
         self.backgroundColor = backgroundColor
         self.defaultBackgroundColor = backgroundColor

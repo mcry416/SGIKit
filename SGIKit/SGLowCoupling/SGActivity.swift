@@ -28,6 +28,20 @@ class SGActivity: UIScrollView {
     /// Inside fragments collection, which contains organizational form for SGItem.
     public var fragments: Array<SGFragment> = Array<SGFragment>()
     
+    /// Inside vice fragment cache.
+    private var viceFragment: SGFragment?
+    
+    /// Inside top fragment cache.
+    private var topFragment: SGFragment?
+    
+    /// Inside bottom fragment cache.
+    private var bottomFragment: SGFragment?
+    
+    ///
+    private var placeholderFragment: SGFragment?
+    
+    private var isActiveCount: Int = 0
+    
     /// Inside items collection.
     public var items: Array<SGItem> = Array<SGItem>()
     
@@ -38,6 +52,8 @@ class SGActivity: UIScrollView {
     private var originalItemWidth: CGFloat = 0
     
     public var isScrollToTopTouchOff: Bool = false
+    
+    internal var bottomRefreshControl: UIRefreshControl?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -50,6 +66,7 @@ class SGActivity: UIScrollView {
     }
     
     override func didMoveToWindow() {
+        guard self.superview != nil else { return }
 
         _reload()
     }
@@ -59,13 +76,21 @@ class SGActivity: UIScrollView {
 // MARK: - Init.
 extension SGActivity{
     
-    fileprivate final func _initView(){
+    private final func _initView(){
         // Delegate for SGActivityRefresh.
         self.delegate = self
     }
     
     // MARK: - Reload.
-    fileprivate final func _reload(){
+    // When SGActivity instance was push or removed from superview and execute this method.
+    // The `fragments` is plain fragment collection, not contains top fragment, bottom fragment, and vice fragment,
+    // add, delete and others operation for SGActivity instance is avaliable for fragments only.
+    // Note: First time the SGActivity insatance will execute this method from delegate, and reads objects into caches,
+    //       subsquent operations will read object from caches rather than delegate consequentlly.
+    private final func _reload(){
+        
+        isInPortraitMode = self.frame.width >= kSCREEN_HEIGHT
+        
         if let activityDelegate = self.activityDelegate {
             fragments.removeAll()
             items.removeAll()
@@ -80,8 +105,14 @@ extension SGActivity{
             // Get activity's frament count.
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 
+                
                 // Get outmost layer framgent by index.
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                if fragment!.isActive {
+                    isActiveCount += 1
+                }
+                assert(isActiveCount <= 2, "The property of `isActive` max count for fragments is 1.")
+                
                 let sideSpacing: CGFloat = fragment?.sideSpacing ?? 0
                 if let fragmentDelegate = fragment?.delegate {
                     
@@ -126,11 +157,13 @@ extension SGActivity{
                 
             }
             // Append ended, set content size for self.
+            let tempMaxHeight: CGFloat = self.frame.height > yValue ? self.frame.height : yValue
             self.contentSize = CGSize(width: self.frame.width,
-                                      height: yValue)
+                                      height: tempMaxHeight)
             
             // If exist the top fragment, and add it into activity.
             if let topFragment = activityDelegate.topFragmentForSGActivity?(self) {
+                self.topFragment = topFragment
                 if let topFragmentDelegate = topFragment.delegate {
                     for itemIndex in 0..<topFragmentDelegate.numberOfItemForFragment(topFragment) {
                         
@@ -151,12 +184,14 @@ extension SGActivity{
             
             // If exist the bottom fragment, and add it into activity.
             if let bottomFragment = activityDelegate.bottomFragmentForSGActivity?(self) {
+                self.bottomFragment = bottomFragment
+                let underYValue: CGFloat = (self.contentSize.height > kSCREEN_HEIGHT) ? self.contentSize.height : kSCREEN_HEIGHT
                 if let bottomFragmentDelegate = bottomFragment.delegate {
                     for itemIndex in 0..<bottomFragmentDelegate.numberOfItemForFragment(bottomFragment) {
                         
                         let subItem = bottomFragment.delegate?.itemAtIndex(itemIndex, fragment: bottomFragment)
                         subItem?.frame = CGRect(x: 0,
-                                                y: self.contentSize.height,
+                                                y: underYValue,
                                                 width: subItem!.frame.width,
                                                 height: subItem!.frame.height)
                         
@@ -169,8 +204,70 @@ extension SGActivity{
                 }
             }
             
+            if let viceFragment = activityDelegate.viceFragmentForSGActivity?(self) {
+                self.viceFragment = viceFragment
+                self.viceFragment?.items.forEach({ item in
+                    item.isHidden = true
+                })
+            }
+            
+            if let placeholderFragment = activityDelegate.placeholderFragmentForSGActivity?(self) {
+                self.placeholderFragment = placeholderFragment
+//                var yValue: CGFloat = 0
+//                placeholderFragment.items.forEach { item in
+//                    item.frame = CGRect(x: 0, y: yValue, width: item.frame.width, height: item.frame.height)
+//                    item.backgroundColor = .red
+//                    self.addSubview(item)
+//
+//                    UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut) {
+//                        item.isHidden = true
+//                    }
+//
+//                    if item.bundle != nil {
+//                        item.bindBundle(item.bundle)
+//                    }
+//
+//                    yValue = yValue + item.frame.height
+//                }
+            }
+            
         }
-        
+        setRefresh()
+    }
+    
+    private final func setRefresh(){
+        if let activityDelegate = self.activityDelegate {
+            if let topTitle = activityDelegate.topRefreshAttributedTitleForSGActivity?(self) {
+                self.refreshControl = UIRefreshControl()
+                self.refreshControl?.attributedTitle = topTitle
+                self.refreshControl?.addTarget(self, action: #selector(topRefreshListener), for: .valueChanged)
+            }
+            if let bottomTitle = activityDelegate.bottomRefreshAttributedTitleForSGActivity?(self) {
+                self.bottomRefreshControl = UIRefreshControl()
+                var lastY: CGFloat = self.subviews[self.subviews.count - 1].frame.maxY
+                lastY = (self.frame.height > lastY) ? self.frame.height : lastY
+                lastY = kSCREEN_HEIGHT
+                self.bottomRefreshControl!.frame = CGRect(x: 0, y: lastY, width: kSCREEN_WIDTH, height: 80)
+                Log.warning("FRAME: \(self.bottomRefreshControl!.frame)")
+                self.bottomRefreshControl!.attributedTitle = bottomTitle
+                self.bottomRefreshControl!.addTarget(self, action: #selector(bottomRefreshListener), for: .valueChanged)
+                self.addSubview(self.bottomRefreshControl!)
+            }
+        }
+    }
+    
+    @objc private final func topRefreshListener(){
+        if let activityDelegate = self.activityDelegate {
+            activityDelegate.topRefreshListenerForSGActivity?(self)
+            self.refreshControl?.endRefreshing()
+        }
+    }
+    
+    @objc private final func bottomRefreshListener(){
+        if let activityDelegate = self.activityDelegate {
+            activityDelegate.bottomRefreshListenerForSGActivity?(self)
+            self.bottomRefreshControl?.endRefreshing()
+        }
     }
     
 }
@@ -178,32 +275,50 @@ extension SGActivity{
 // MARK: - Outside method.
 extension SGActivity{
     
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        
+    }
+    
     // MARK: - Rotate.
     open func activityRotate(rawValue: Int){
         switch rawValue {
         case 1:
             /**
              Likes this mode:
-             ---------
-             |   -----------   |
-             |   |            |  |
-             |   |            |  |
-             |   |            |  |
-             |   -----------   |
-             |        o         |
-             ---------
+             ┏━━━━━┓
+             ┃  ┏━━┓  ┃
+             ┃  ┃       ┃  ┃
+             ┃  ┃       ┃  ┃
+             ┃  ┃       ┃  ┃
+             ┃  ┃       ┃  ┃
+             ┃  ┗━━┛  ┃
+             ┃        o        ┃
+             ┗━━━━━┛
              */
+            
             var yValue: CGFloat = 0
+            
+            // Set all items was visiable.
+            fragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.isHidden = false
+                }
+            }
+            
+            // Hidden the vice fragment.
+            if let viceFragment = self.viceFragment {
+                viceFragment.items.forEach { item in
+                    item.isHidden = true
+                }
+            }
+            
             // Iterate fragment to iterate items.
             fragments.forEach { fragment in
                 fragment.items.forEach { item in
-                    Log.error("sideSpacing: \(fragment.sideSpacing / 2)")
                     item.frame = CGRect(x: fragment.sideSpacing / 2,
                                         y: yValue,
                                         width: item.originalWidth - fragment.sideSpacing,
                                         height: item.frame.height)
-                    
-                    Log.warning("Frame: \(item.frame)")
                     
                     // Sub item frame has been setted, then call the method of 'itemWillRotate'.
                     UIView.animate(withDuration: 0.382) {
@@ -225,14 +340,34 @@ extension SGActivity{
                                     y: self.frame.origin.y,
                                     width: kSCREEN_WIDTH,
                                     height: kSCREEN_HEIGHT)
-                self.contentSize = CGSize(width: self.frame.width, height: yValue)
+                let tempMaxHeight: CGFloat = self.frame.height > yValue ? self.frame.height : yValue
+                self.contentSize = CGSize(width: self.frame.width, height: tempMaxHeight)
             }
             
             isInPortraitMode = true
             
-            if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
-                var underYValue: CGFloat = 0
+            if let topFragment = self.topFragment {
+                var downYValue: CGFloat = 0
                 topFragment.items.forEach { item in
+                    downYValue = downYValue - item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: downYValue,
+                                        width: item.frame.width,
+                                        height: item.frame.height)
+                    
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 1)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+            }
+            
+            if let bottomFragment = self.bottomFragment {
+                var underYValue: CGFloat = (self.contentSize.height > kSCREEN_HEIGHT) ? self.contentSize.height : kSCREEN_HEIGHT
+                bottomFragment.items.forEach { item in
                     underYValue = underYValue - item.frame.height
                     item.frame = CGRect(x: 0,
                                         y: underYValue,
@@ -260,22 +395,114 @@ extension SGActivity{
              ------------------------
                  -     -
              */
-//            var yValue: CGFloat = 0
-//            for subItem in self.items {
-//                subItem.frame = CGRect(x: 0,
-//                                       y: yValue,
-//                                       width: kSCREEN_HEIGHT,
-//                                       height: subItem.frame.height)
-//                UIView.animate(withDuration: 0.5) {
-//                    subItem.itemWillRotate(rawValue: 3)
-//                }
-//                subItem.itemWillRotate(rawValue: 3)
-//                yValue  = subItem.frame.height + yValue
-//            }
-//
-            var yValue: CGFloat = 0
-            // Iterate fragment to iterate items.
+            
+            // Set `isActive` attributes.
+            
+            // Set all items visiable is according to `isActive`.
             fragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.isHidden = (fragment.isActive) ? false : true
+                }
+            }
+            
+            let newActiveFragments: Array<SGFragment> = fragments.compactMap { fragment in
+                return (fragment.isActive == true) ? fragment : nil
+            }
+            
+            var activeYValue: CGFloat = 0
+            newActiveFragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.frame = CGRect(x: fragment.sideSpacing / 2,
+                                        y: activeYValue,
+                                        width: kSCREEN_HEIGHT - fragment.sideSpacing,
+                                        height: item.frame.height)
+                    
+                    // Sub item frame has been setted, then call the method of 'itemWillRotate'.
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+
+                    // When activity execute this case, which means it's not first time to load,
+                    // item need to re-bind bundle in this situation consequently.
+                    if item.bundle != nil {
+                        item.bindBundleLandscape(item.bundle ?? nil)
+                    }
+
+                    activeYValue = item.frame.height + activeYValue
+                }
+            }
+            
+            if self.isActiveCount >= 1 {
+                UIView.animate(withDuration: 0.5) {
+                    self.frame = CGRect(x: 0, y: self.frame.origin.y, width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                    self.contentSize = CGSize(width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                }
+                return
+            }
+            
+            // Check the vice fragment is exist and iterate the `items` to set a new view in landscape mode.
+            if let viceFragment = self.viceFragment {
+                // First set the source of `fragments` to be hidden.(for show the vice fragment only)
+                fragments.forEach { fragment in
+                    fragment.items.forEach { item in
+                        item.isHidden = true
+                    }
+                }
+                
+                var yValue: CGFloat = 0
+                
+                // Iterate the vice fragment.
+                viceFragment.items.forEach { item in
+                    // Set the the property of the `isHidden` for vice fragment's item to be false only.
+                    item.isHidden = false
+                    item.frame = CGRect(x: viceFragment.sideSpacing / 2,
+                                        y: yValue,
+                                        width: kSCREEN_HEIGHT - viceFragment.sideSpacing,
+                                        height: item.frame.height)
+                    
+                    if item.superview == nil {
+                        self.addSubview(item)
+                    }
+                    
+                    // Sub item frame has been setted, then called the method of 'itemWillRotate'.
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+                    
+                    // When activity execute this case, which means it's not first time to load,
+                    // item need to re-bind bundle in this situation consequently.
+                    if item.bundle != nil {
+                        item.bindBundleLandscape(item.bundle ?? nil)
+                    }
+
+                    yValue = item.frame.height + yValue
+                }
+                
+                UIView.animate(withDuration: 0.5) {
+                    self.frame = CGRect(x: 0, y: self.frame.origin.y, width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                    self.contentSize = CGSize(width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                }
+                
+                isInPortraitMode = false
+                
+                return
+            }
+
+            var yValue: CGFloat = 0
+            
+            // Set all items visiable is according to `isInterest`.
+            fragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.isHidden = (fragment.isInterest) ? true : false
+                }
+            }
+            
+            // Iterate fragments to iterate items.
+            // Filter the frgaments that the property of `isInterest` is false, which is make for hiddeing the fragment.
+            let newFragments: Array<SGFragment> = fragments.compactMap { fragment in
+                return (fragment.isInterest == false) ? fragment : nil
+            }
+            newFragments.forEach { fragment in
                 fragment.items.forEach { item in
                     item.frame = CGRect(x: fragment.sideSpacing / 2,
                                         y: yValue,
@@ -304,15 +531,14 @@ extension SGActivity{
             
             isInPortraitMode = false
             
-            if let topFragment = activityDelegate?.topFragmentForSGActivity?(self) {
-                var underYValue: CGFloat = 0
+            if let topFragment = self.topFragment {
+                var downYValue: CGFloat = 0
                 topFragment.items.forEach { item in
-                    underYValue = underYValue - item.frame.height
+                    downYValue = downYValue - item.frame.height
                     item.frame = CGRect(x: 0,
-                                        y: underYValue,
+                                        y: downYValue,
                                         width: kSCREEN_HEIGHT,
                                         height: item.frame.height)
-                    Log.warning("frame: \(item.frame)")
                     UIView.animate(withDuration: 0.382) {
                         item.itemWillRotate(rawValue: 3)
                     }
@@ -322,7 +548,7 @@ extension SGActivity{
                     }
                 }
             }
-            if let bottomFragment = activityDelegate?.bottomFragmentForSGActivity?(self) {
+            if let bottomFragment = self.bottomFragment {
                 var underYValue: CGFloat = self.contentSize.height
                 bottomFragment.items.forEach { item in
                     underYValue = underYValue + item.frame.height
@@ -351,8 +577,64 @@ extension SGActivity{
              ------------------------
                             -
              */
+            // Check the vice fragment is exist and iterate the `items` to set a new view in landscape mode.
+            if let viceFragment = self.viceFragment {
+                fragments.forEach { fragment in
+                    fragment.items.forEach { item in
+                        item.isHidden = true
+                    }
+                }
+                
+                var yValue: CGFloat = 0
+                
+                viceFragment.items.forEach { item in
+                    item.isHidden = false
+                    item.frame = CGRect(x: viceFragment.sideSpacing / 2,
+                                        y: yValue,
+                                        width: kSCREEN_HEIGHT - viceFragment.sideSpacing,
+                                        height: item.frame.height)
+                    
+                    if item.superview == nil {
+                        self.addSubview(item)
+                    }
+                    
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 4)
+                    }
+
+                    // When activity execute this case, which means it's not first time to load,
+                    // item need to re-bind bundle in this situation consequently.
+                    if item.bundle != nil {
+                        item.bindBundleLandscape(item.bundle ?? nil)
+                    }
+
+                    yValue = item.frame.height + yValue
+                }
+                
+                UIView.animate(withDuration: 0.5) {
+                    self.frame = CGRect(x: 0, y: self.frame.origin.y, width: kSCREEN_HEIGHT, height: kSCREEN_WIDTH)
+                    self.contentSize = CGSize(width: kSCREEN_HEIGHT, height: yValue)
+                }
+                
+                isInPortraitMode = false
+                
+                return
+            }
+            
             var yValue: CGFloat = 0
+            
+            // Set all items visiable is according to `isInterest`.
             fragments.forEach { fragment in
+                fragment.items.forEach { item in
+                    item.isHidden = (fragment.isInterest) ? true : false
+                }
+            }
+            
+            // Iterate fragment to iterate items.
+            let newFragments: Array<SGFragment> = fragments.compactMap { fragment in
+                return (fragment.isInterest == false) ? fragment : nil
+            }
+            newFragments.forEach { fragment in
                 fragment.items.forEach { item in
                     item.frame = CGRect(x: fragment.sideSpacing / 2,
                                         y: yValue,
@@ -374,6 +656,43 @@ extension SGActivity{
             }
             
             isInPortraitMode = false
+            
+            if let topFragment = self.topFragment {
+                var underYValue: CGFloat = 0
+                topFragment.items.forEach { item in
+                    underYValue = underYValue - item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: underYValue,
+                                        width: kSCREEN_HEIGHT,
+                                        height: item.frame.height)
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+            }
+            if let bottomFragment = self.bottomFragment {
+                var underYValue: CGFloat = self.contentSize.height
+                bottomFragment.items.forEach { item in
+                    underYValue = underYValue + item.frame.height
+                    item.frame = CGRect(x: 0,
+                                        y: underYValue,
+                                        width: kSCREEN_HEIGHT,
+                                        height: item.frame.height)
+                    
+                    UIView.animate(withDuration: 0.382) {
+                        item.itemWillRotate(rawValue: 3)
+                    }
+                    
+                    if item.bundle != nil {
+                        item.bindBundle(item.bundle)
+                    }
+                }
+            }
+            
         default:
             break
         }
@@ -386,6 +705,7 @@ extension SGActivity{
      */
     @objc public final func activityDidLoad(){
         if let activityDelegate = self.activityDelegate{
+            activityDelegate.activityDidLoad?()
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
                 fragment?.fragmentDidLoad()
@@ -397,6 +717,7 @@ extension SGActivity{
      */
     @objc public final func activityWillAppear(){
         if let activityDelegate = self.activityDelegate{
+            activityDelegate.activityWillAppear?()
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
                 fragment?.fragmentWillAppear()
@@ -408,6 +729,7 @@ extension SGActivity{
      */
     @objc final func activityDidAppear(){
         if let activityDelegate = self.activityDelegate{
+            activityDelegate.activityDidAppear?()
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
                 fragment?.fragmentDidAppear()
@@ -419,6 +741,7 @@ extension SGActivity{
      */
     @objc final func activityWillDisappear(){
         if let activityDelegate = self.activityDelegate{
+            activityDelegate.activityWillDisappear?()
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
                 fragment?.fragmentWillDisappear()
@@ -430,6 +753,7 @@ extension SGActivity{
      */
     @objc final func activityDidDisappear(){
         if let activityDelegate = self.activityDelegate{
+            activityDelegate.activityDidDisappear?()
             for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
                 let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
                 fragment?.fragmentDidDisappear()
@@ -516,8 +840,6 @@ extension SGActivity{
         
         // Update content size.
         self.contentSize = CGSize(width: self.frame.width, height: currentYValue)
-        
-        Log.debug("Content height: \(self.contentSize.height)")
         
         if let activityDelegate = self.activityDelegate {
             // If exist the bottom fragment, and update its frame.
@@ -608,6 +930,83 @@ extension SGActivity{
     }
     
     // MARK: - Others method.
+    /**
+     
+     */
+    open func setEnablePlaceholderFragment(){
+        if let activityDelegate = self.activityDelegate {
+            for index in 0..<activityDelegate.numberOfSGFragmentForSGActivity(self) {
+                // Get outmost layer framgent by index.
+                let fragment = activityDelegate.fragmentAtIndex?(self, index: index)
+                if let fragmentDelegate = fragment?.delegate {
+                    
+                    // Enumerated current fragment to get sub item.
+                    for itemIndex in 0..<fragmentDelegate.numberOfItemForFragment(fragment!) {
+                        
+                        // Get current fragment's sub item by index.
+                        let subItem = fragmentDelegate.itemAtIndex(itemIndex, fragment: fragment!)
+                        
+                        // Set animated for fragment which was located in here.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0) {
+                            UIView.animate(withDuration: 0, delay: 0, options: .curveEaseInOut) {
+                                subItem.alpha = 0
+                            } completion: { (true) in
+                                subItem.isHidden = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if let placeholderFragment = self.placeholderFragment {
+            var yValue: CGFloat = 0
+            placeholderFragment.items.forEach { item in
+                item.frame = CGRect(x: 0, y: yValue, width: item.frame.width, height: item.frame.height)
+                self.addSubview(item)
+                
+                UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut) {
+                    item.isHidden = false
+                }
+                
+                if item.bundle != nil {
+                    item.bindBundle(item.bundle)
+                }
+                
+                yValue = yValue + item.frame.height
+            }
+        }
+        
+        
+    }
+    
+    /**
+     
+     */
+    open func setDisablePlaceholderFragment(){
+        fragments.forEach { fragment in
+            fragment.items.forEach { item in
+                item.isHidden = false
+                item.alpha = 0
+                UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseInOut) {
+                    item.alpha = 1
+                } completion: { (true) in
+                }
+            }
+        }
+        if let placeholderFragment = activityDelegate?.placeholderFragmentForSGActivity?(self) {
+            placeholderFragment.items.forEach { item in
+                UIView.animate(withDuration: 0.2, delay: 0, options: .curveEaseInOut) {
+                    item.alpha = 1
+                    item.isHidden = true
+                } completion: { (true) in
+                    if item.superview != nil {
+                        item.removeFromSuperview()
+                    }
+                }
+            }
+        }
+    }
     
     /**
      Scroll to specified SGItem.

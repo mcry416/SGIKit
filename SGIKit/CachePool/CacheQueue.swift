@@ -12,6 +12,7 @@ public struct CacheQueue<T> {
      
     public init() {}
  
+    @discardableResult
     public mutating func dequeue() -> T? {
         return data.removeFirst()
     }

@@ -19,6 +19,11 @@ class SettingsViewAdapter: NSObject, UITableViewDelegate, UITableViewDataSource 
         self.id = id
     }
     
+    public func updateDatas(datas: Array<SettingsModel>){
+        self.datas.removeAll()
+        self.datas = datas
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return datas.count
     }
@@ -31,21 +36,25 @@ class SettingsViewAdapter: NSObject, UITableViewDelegate, UITableViewDataSource 
         var cell = tableView.dequeueReusableCell(withIdentifier: id, for: indexPath)
         cell = UITableViewCell(style: .value1, reuseIdentifier: id)
         
-        switch datas[indexPath.row].type {
-        case .done:
-            cell.accessoryType = .disclosureIndicator
-        case .enter:
-            cell.accessoryType = .checkmark
-        case .switchType:
-            let uiSwitch = UISwitch()
-   //         uiSwitch.addTarget(self, action: #selector(uiSwitchValueChangeListener(uiSwitch:)), for: .valueChanged)
-            cell.accessoryView = uiSwitch
-        case .blank:
-            cell.accessoryType = .none
-        case .none:
-            break
-        }
+        cell.setSGSettingsCell(model: datas[indexPath.row])
         
+//        switch datas[indexPath.row].type {
+//        case .done:
+//            cell.accessoryType = .checkmark
+//        case .enter:
+//            cell.accessoryType = .disclosureIndicator
+//        case .switchType:
+//            let uiSwitch = UISwitch()
+//   //         uiSwitch.addTarget(self, action: #selector(uiSwitchValueChangeListener(uiSwitch:)), for: .valueChanged)
+//            cell.accessoryView = uiSwitch
+//        case .blank:
+//            cell.accessoryType = .none
+//        case .none:
+//            break
+//        }
+        
+        cell.backgroundColor = SGColor.white1()
+        cell.textLabel?.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
         cell.textLabel?.text = datas[indexPath.row].text
         if datas[indexPath.row].res != nil {
             cell.detailTextLabel?.text = datas[indexPath.row].res!
@@ -79,9 +88,7 @@ class SettingsViewAdapter: NSObject, UITableViewDelegate, UITableViewDataSource 
     }
     
     @objc private func uiSwitchValueChangeListener(uiSwitch: UISwitch){
-        if uiSwitchChangedAction != nil {
-            uiSwitchChangedAction!(uiSwitch.isOn)
-        }
+        uiSwitchChangedAction?(uiSwitch.isOn)
     }
 
 }

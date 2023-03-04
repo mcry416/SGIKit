@@ -70,7 +70,7 @@ extension SGItem{
      - Implements this method and create a bundle class.
      - Parameter bundle: Optional plain object and closure class.
      */
-    func bindBundle(_ bundle: Any?) {
+    @objc func bindBundle(_ bundle: Any?) {
         
     }
     
@@ -80,7 +80,7 @@ extension SGItem{
      - It's unnecessary for item to override when Activity is portrait mode.
      - Parameter bundle: Optional plain object and closure class.
      */
-    func bindBundleLandscape(_ bundle: Any?) {
+    @objc func bindBundleLandscape(_ bundle: Any?) {
         
     }
     

@@ -12,11 +12,9 @@ class SGPopupView: NSObject {
     
     enum ShowType {
         /// Only content view to show.
-        case Plain
+        case plain
         /// Close button and center title.
-        case Navigation
-        /// Root with scroll view.
-        case Scroll
+        case navigation
     }
     
     ///
@@ -27,12 +25,10 @@ class SGPopupView: NSObject {
     private lazy var backButton: UIButton = self.createBackButton()
     ///
     private lazy var centerLabel: UILabel = self.createCenterLabel()
-    ///
-    private lazy var scrollView: UIScrollView = self.createScrollView()
-    
+
     public weak var delegate: SGPopupViewDelegate?
     
-    private var showType: ShowType = .Plain
+    private var showType: ShowType = .plain
     
     public final var height: CGFloat = 200{
         didSet{
@@ -51,21 +47,18 @@ class SGPopupView: NSObject {
     }
     /// Skin background color.
     public var backgroundColor: UIColor?{
-        didSet{
-            self.backgroundView.backgroundColor = backgroundColor
-        }
+        set { backgroundView.backgroundColor = newValue }
+        get { backgroundView.backgroundColor ?? .black.withAlphaComponent(0.4) }
     }
     /// Content view background color.
-    public var contentColor: UIColor?{
-        didSet{
-            self.contentView.backgroundColor = contentColor
-        }
+    public var contentColor: UIColor {
+        set { contentView.backgroundColor = newValue }
+        get { contentView.backgroundColor ?? .white }
     }
     /// Navigation style title.
-    public var title: String?{
-        didSet{
-            self.centerLabel.text = title
-        }
+    public var title: String {
+        set { centerLabel.text = newValue }
+        get { centerLabel.text ?? "" }
     }
     /// Listen the SGPopupView when it
     public var setOnClickListener: SetOnClickListener?
@@ -84,7 +77,7 @@ class SGPopupView: NSObject {
         fatalError("init(coder:) has not been implemented")
     }
     
-    convenience init(height: CGFloat, showType: ShowType = .Plain) {
+    convenience init(height: CGFloat, showType: ShowType = .plain) {
         self.init()
         self.height = height
         
@@ -100,14 +93,10 @@ class SGPopupView: NSObject {
 
 }
 
-extension SGPopupView{
-    
-}
-
 // MARK: - View.
 extension SGPopupView{
     
-    fileprivate func _initView(showType: ShowType){
+    private func _initView(showType: ShowType){
         let window = UIApplication.shared.keyWindow
 
         delegate?.popupViewWillShow?(self)
@@ -116,29 +105,29 @@ extension SGPopupView{
         delegate?.popupViewDidShow?(self)
         
         switch showType {
-        case .Plain:
+        case .plain:
             break
-        case .Navigation:
+        case .navigation:
             contentView.addSubview(backButton)
             contentView.addSubview(centerLabel)
-        case .Scroll:
-            contentView.addSubview(scrollView)
         default:
             break
         }
         
         self.contentView.alpha = 0
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+        self.backgroundView.alpha = 0
+        UIView.animate(withDuration: 0.45, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 2, options: .curveEaseInOut) {
             self.contentView.frame = CGRect(x: 0,
                                             y: kSCREEN_HEIGHT - self.height,
                                             width: kSCREEN_WIDTH,
                                             height: self.height)
+            self.backgroundView.alpha = 1
             self.contentView.alpha = 1
         }
 
     }
     
-    fileprivate func createBackgroundView() -> UIView{
+    private func createBackgroundView() -> UIView{
         let view = UIView(frame: CGRect(x: 10, y: 10, width: 10, height: 10))
         view.frame = UIApplication.shared.keyWindow?.bounds ?? .zero
         view.backgroundColor = .black.withAlphaComponent(0.4)
@@ -150,7 +139,7 @@ extension SGPopupView{
         return view
     }
     
-    fileprivate func createContentView() -> UIView{
+    private func createContentView() -> UIView{
         let view = UIView()
         view.backgroundColor = .white
         view.layer.masksToBounds = true
@@ -172,14 +161,14 @@ extension SGPopupView{
         return view
     }
     
-    fileprivate func createBackButton() -> UIButton{
+    private func createBackButton() -> UIButton{
         let button = UIButton(type: UIButton.ButtonType.custom)
         button.setImage(UIImage(named: ""), for: .normal)
         button.frame = CGRect(x: k12, y: 5, width: 39, height: 39)
         return button
     }
     
-    fileprivate func createCenterLabel() -> UILabel{
+    private func createCenterLabel() -> UILabel{
         let label = UILabel()
         label.textAlignment = .center
         label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
@@ -187,34 +176,33 @@ extension SGPopupView{
         return label
     }
     
-    fileprivate func createScrollView() -> UIScrollView{
-        let scrollView = UIScrollView()
-        scrollView.frame = contentView.bounds
-        scrollView.contentSize = contentView.bounds.size
-        return scrollView
-    }
-    
 }
 
 // MARK: - Event.
 extension SGPopupView{
     
-    @objc fileprivate func removeSGPopupView(){
-        backgroundView.removeFromSuperview()
+    public func addSubview(_ view: UIView){
+        self.contentView.addSubview(view)
     }
     
-    @objc func hideSGPopupView(){
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
+    @objc private func removeSGPopupView(){
+        self.backgroundView.removeFromSuperview()
+    }
+    
+    @objc public func hideSGPopupView(){
+        UIView.animate(withDuration: 0.3, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 7, options: .curveEaseInOut) {
             self.contentView.frame = CGRect(x: 0,
                                             y: kSCREEN_HEIGHT,
                                             width: kSCREEN_WIDTH,
                                             height: self.height)
             self.contentView.alpha = 0
+            self.backgroundView.alpha = 0
         } completion: { (true) in
             self.setCloseListener!()
         }
 
         delegate?.popupViewWillDismiss?(self)
+        
         self.perform(#selector(self.removeSGPopupView), with: nil, afterDelay: 0.3)
         delegate?.popupViewDidDismiss?(self)
     }

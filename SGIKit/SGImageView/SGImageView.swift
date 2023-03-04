@@ -119,6 +119,16 @@ class SGImageView: UIView {
 
 extension SGImageView{
     
+    public func setOnImageViewClickListener(listener: (() -> Void)?){
+        self.setOnImageClickListener = {
+            listener?()
+        }
+    }
+    
+}
+
+extension SGImageView{
+    
     // MARK: - Convenience init.
     /**
      Provide a dynamic animation instance for SGImageView.
