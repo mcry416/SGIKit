@@ -1,6 +1,6 @@
 # [![v4wP4x.png](https://s1.ax1x.com/2022/08/31/v4wP4x.png)](https://imgse.com/i/v4wP4x)
 # SGIKit
-Standard General Interface Kit. It contains useful extension and foundation subclass which made of delegate/inherit/singleston/adapter desigen pattern.
+Standard General Interface Kit. It contains useful extension and foundation subclass which made of delegate/inherit/sington/adapter desigen pattern.
 Standard General Interface Fast Kit. It's DSL development way which made of closure and extension by Swift language features.
 
 
@@ -71,13 +71,13 @@ A chain called method to generate `NSAttributedString`.
 ### 2.UIKit/Foundation Extension
 
 - #### UIImageView+Extension
-Provide convenience way to set URL for image, whichs use `LRU` algorithm to make sure memory normally.
+Provide convenience way to set image with URL for UIImageView, whichs use `LRU` algorithm to make sure memory normally.
 
 - #### UIView+Extension
 Use runtime to add a convenience click listener with method.
 
 - #### GCD+Extension
-Provide ability of oiperating queue, thread safety.
+Provide ability of operating queue, thread safety.
 
 - #### String+Extension
 An extension for String, likes text height or width, string cut.
@@ -158,9 +158,5 @@ listView.setOnCellClickListnenr { cell, indexPath in
                   self.ImageView(name: "ef")
                  ]
              }]}   
-                 
-```    
-            
-             }]
         }
 ```
