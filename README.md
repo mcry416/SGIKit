@@ -1,14 +1,14 @@
 # [![v4wP4x.png](https://s1.ax1x.com/2022/08/31/v4wP4x.png)](https://imgse.com/i/v4wP4x)
 # SGIKit
 Standard General Interface Kit. It contains useful extension and foundation subclass which made of delegate/inherit/sington/adapter desigen pattern.
-Standard General Interface Fast Kit. It's DSL development way which made of closure and extension by Swift language features.
+Standard General Interface Fast Kit. It's DSL development way which made of closure and extension by Swift language features.(Deprecated)
 
 
 |Base Name| Function / Features|
 |-|-|
-|SGLowCoupling| A development forms|
+|GSLowCoupling| A development forms|
 |SGIKit(Basic widget & foudation)| Self define view subclass and extension|
-|SGIFKit| DSL development forms|
+|SGIFKit(Deprecated)| DSL development forms|
 
 ## Standard General Interface Kit.
 
@@ -16,13 +16,11 @@ What we contains in here:
 
 ### Basic Application Development Framework (An efficient MVVM like architecture based on hash algorithm)
 
-- ### SGItem (Boot view layer)
+- ### GSItem (Boot view layer)
 
-- ### Bundle (Boot model and closure layer)
+- ### GSBundle (Boot model and closure layer)
 
-- ### SGFragment (An abstract section to manage items)
-
-- ### SGActivity (Top management container, container delegate)
+- ### GSActivity (Top management container)
 
 ### 1.Basic Widget
 
@@ -49,6 +47,12 @@ A float view that could be draged anywhere in view to presented a video.
 
 - #### SGPopupView
 A container to presented some widgets to popup.
+
+- #### SGPopupSelectView
+A popup style for select business scenes, fill some models only.
+
+- #### SGPopupCenterView
+A popup style container to add others sub-view.
 
 - #### SGNavigationBar
 A navigation bar to use in top of the view, which is beautiful and easy to use(really easy to use).
@@ -77,7 +81,7 @@ Provide convenience way to set image with URL for UIImageView, whichs use `LRU` 
 Use runtime to add a convenience click listener with method.
 
 - #### GCD+Extension
-Provide ability of operating queue, thread safety.
+Provide an ability of operating queue, thread safety.
 
 - #### String+Extension
 An extension for String, likes text height or width, string cut.
@@ -94,69 +98,37 @@ A cache class in application that initlized with various data structure.
 - #### Memory
 A tool to print the information for varible's ref or deliver value.
 
-- #### GramKit (Developing.)
-A tool like SnapKit for UIView and its subclass to make layout, notice its function to make layout rather than make constrains.
+- #### Gram
+A tool like SnapKit for UIView to make layout with the DSL way.
 
-## Standard General Interface Fast Kit.
-
-### Foudation Widget.
-
-- #### VLayout
-
-- #### HLayout
-
-- #### Button
-
-- #### ImageView
-
-- #### TextView
-
-- #### List
-
-### DSL(Not all) Features.
-
-- #### Bind Widget Attributes.
-
+- #### OS
+Provide an ability to control boot system visited. eg. `pthread_lock`, `OSAtomicIncreasement`, etc.
 
 Example code:
 
-- SGListView apply in normally operation.
+- Gram apply in layout:
 ```swift
-let list = SGListView(direction: .vertical, cellClass: MyCell.self)
-listView.frame = self.view.frame
-listView.itemSize = CGSize(width: kSCREEN_WIDTH - 50, height: 100)
-        
-listView.setOnCellDataBindListener { cellClass, model, indexPath in
-    let tempModel: Test1Model = model as! Test1Model
-    let tempCell: MyCell = cellClass as! MyCell
-            
-    tempCell.label.text = tempModel.text1
-    tempCell.label2.text = tempModel.text2
-}
-listView.setOnCellClickListnenr { cell, indexPath in
-
+imageView.gram.layout { make in
+    make.size.equalTo(CGSize(width: 50, height: 50))
+    make.centerX.equalTo(view.gram.centerX, offset: 100)
+    make.centerY.equalTo(view.gram.centerY)
 }
 ```
- 
 
-- DSL apply in `viewDidLoad()`
+- Print a warning class infomation:
 ```swift
-        VLayout {
-            [self.HLayout {
-                [self.Button(text: "Beijing") {
-                    self.toast("Beijing", location: .center)
-                    Log.debug("Beijing")
-                },
-                 self.Button(text: "Nanjing", listener: {
-                    self.toast("Nanjing", location: .center)
-                    self.Bind(1001).image = UIImage(named: "ef")
-                })]
-            },
-             self.HLayout {
-                 [self.ImageView(name: "taylor", size: CGSize(width: 66, height: 66), bind: 1001),
-                  self.ImageView(name: "ef"),
-                  self.ImageView(name: "ef")
-                 ]
-             }]}   
-        }
+Log.warning(progress)
+```
+
+- Fastly to generate a settings view:
+```swift
+let view = SGSettingsView()
+            .fill("WiFi", type: .done, res: nil)
+            .fill("BlueTooth", type: .done, res: nil)
+            .fill("Fly Mode", type: .done, res: nil)
+            .builder()
+
+view.setOnSettingsClickListener { [weak self] (index, status) in
+    // print...
+}
 ```
